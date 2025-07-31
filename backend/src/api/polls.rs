@@ -1,6 +1,6 @@
 use axum::{
     extract::{Path, Query, State},
-    http::StatusCode,
+    http::{HeaderMap, StatusCode},
     Json,
 };
 use serde::Serialize;
@@ -8,17 +8,52 @@ use uuid::Uuid;
 use crate::models::poll::{CreatePollRequest, Poll, PollListQuery, UpdatePollRequest};
 use crate::services::auth::AuthService;
 
-// Helper function to get user ID for API calls
-// TODO: Replace with proper authentication middleware
-fn get_current_user_id() -> Uuid {
-    // Check if we're in test environment - use a more reliable method
-    if cfg!(test) || std::env::var("CARGO_PKG_NAME").unwrap_or_default().contains("rankchoice") {
-        // Use consistent test user ID during testing
-        Uuid::parse_str("550e8400-e29b-41d4-a716-446655440000").unwrap()
-    } else {
-        // Use dummy ID for non-test environments (will need proper auth later)
-        Uuid::new_v4()
+// Helper function to get user ID from JWT token
+fn get_current_user_id(headers: &HeaderMap, auth_service: &AuthService) -> Result<Uuid, (StatusCode, Json<ApiResponse<()>>)> {
+    // In test environment, use hardcoded test user ID
+    if cfg!(test) {
+        return Ok(Uuid::parse_str("550e8400-e29b-41d4-a716-446655440000").unwrap());
     }
+
+    // Extract Authorization header
+    let authorization = headers
+        .get("authorization")
+        .and_then(|h| h.to_str().ok())
+        .ok_or_else(|| {
+            (
+                StatusCode::UNAUTHORIZED,
+                Json(ApiResponse::<()>::error("UNAUTHORIZED", "Missing authorization header")),
+            )
+        })?;
+
+    // Extract token from "Bearer <token>"
+    let token = authorization
+        .strip_prefix("Bearer ")
+        .ok_or_else(|| {
+            (
+                StatusCode::UNAUTHORIZED,
+                Json(ApiResponse::<()>::error("UNAUTHORIZED", "Invalid authorization format")),
+            )
+        })?;
+
+    // Verify token and extract user ID
+    let claims = auth_service
+        .verify_token(token)
+        .map_err(|_| {
+            (
+                StatusCode::UNAUTHORIZED,
+                Json(ApiResponse::<()>::error("UNAUTHORIZED", "Invalid token")),
+            )
+        })?;
+
+    // Parse user ID from claims
+    Uuid::parse_str(&claims.sub)
+        .map_err(|_| {
+            (
+                StatusCode::UNAUTHORIZED,
+                Json(ApiResponse::<()>::error("UNAUTHORIZED", "Invalid user ID in token")),
+            )
+        })
 }
 
 #[derive(Debug, Serialize)]
@@ -81,11 +116,11 @@ impl<T> ApiResponse<T> {
 
 pub async fn create_poll(
     State(auth_service): State<AuthService>,
+    headers: HeaderMap,
     Json(req): Json<CreatePollRequest>,
 ) -> Result<Json<ApiResponse<crate::models::poll::PollResponse>>, (StatusCode, Json<ApiResponse<()>>)> {
-    // For now, we'll skip authentication and use helper function
-    // TODO: Implement proper authentication middleware
-    let user_id = get_current_user_id();
+    // Extract user ID from JWT token
+    let user_id = get_current_user_id(&headers, &auth_service)?;
 
     // Validate request
     if req.title.trim().is_empty() {
@@ -126,11 +161,10 @@ pub async fn create_poll(
 
 pub async fn list_polls(
     State(auth_service): State<AuthService>,
+    headers: HeaderMap,
     Query(query): Query<PollListQuery>,
 ) -> Result<Json<ApiResponse<PaginatedResponse<crate::models::poll::PollListItem>>>, (StatusCode, Json<ApiResponse<()>>)> {
-    // For now, we'll skip authentication and use helper function
-    // TODO: Implement proper authentication middleware
-    let user_id = get_current_user_id();
+    let user_id = get_current_user_id(&headers, &auth_service)?;
 
     match Poll::list_by_user(auth_service.pool(), user_id, &query).await {
         Ok((polls, total)) => {
@@ -160,11 +194,10 @@ pub async fn list_polls(
 
 pub async fn get_poll(
     State(auth_service): State<AuthService>,
+    headers: HeaderMap,
     Path(poll_id): Path<Uuid>,
 ) -> Result<Json<ApiResponse<crate::models::poll::PollResponse>>, (StatusCode, Json<ApiResponse<()>>)> {
-    // For now, we'll skip authentication and use helper function
-    // TODO: Implement proper authentication middleware
-    let user_id = get_current_user_id();
+    let user_id = get_current_user_id(&headers, &auth_service)?;
 
     match Poll::find_by_id_and_user(auth_service.pool(), poll_id, user_id).await {
         Ok(Some(poll)) => Ok(Json(ApiResponse::success(poll))),
@@ -184,12 +217,11 @@ pub async fn get_poll(
 
 pub async fn update_poll(
     State(auth_service): State<AuthService>,
+    headers: HeaderMap,
     Path(poll_id): Path<Uuid>,
     Json(req): Json<UpdatePollRequest>,
 ) -> Result<Json<ApiResponse<crate::models::poll::PollResponse>>, (StatusCode, Json<ApiResponse<()>>)> {
-    // For now, we'll skip authentication and use helper function
-    // TODO: Implement proper authentication middleware
-    let user_id = get_current_user_id();
+    let user_id = get_current_user_id(&headers, &auth_service)?;
 
     // Validate request if title is being updated
     if let Some(ref title) = req.title {
@@ -219,11 +251,10 @@ pub async fn update_poll(
 
 pub async fn delete_poll(
     State(auth_service): State<AuthService>,
+    headers: HeaderMap,
     Path(poll_id): Path<Uuid>,
 ) -> Result<Json<ApiResponse<()>>, (StatusCode, Json<ApiResponse<()>>)> {
-    // For now, we'll skip authentication and use helper function
-    // TODO: Implement proper authentication middleware
-    let user_id = get_current_user_id();
+    let user_id = get_current_user_id(&headers, &auth_service)?;
 
     match Poll::delete(auth_service.pool(), poll_id, user_id).await {
         Ok(true) => Ok(Json(ApiResponse::success(()))),
