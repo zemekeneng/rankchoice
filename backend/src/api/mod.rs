@@ -1,3 +1,5 @@
 pub mod auth;
 pub mod polls;
-pub mod candidates; 
+pub mod candidates;
+pub mod voting;
+pub mod results; 

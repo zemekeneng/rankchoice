@@ -70,6 +70,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/api/polls/:id/candidates/order", put(api::candidates::reorder_candidates))
         .route("/api/candidates/:id", put(api::candidates::update_candidate))
         .route("/api/candidates/:id", delete(api::candidates::delete_candidate))
+        // Voting routes (public)
+        .route("/api/vote/:token", get(api::voting::get_ballot))
+        .route("/api/vote/:token", post(api::voting::submit_ballot))
+        .route("/api/vote/:token/receipt", get(api::voting::get_voting_receipt))
+        // Results routes (protected)
+        .route("/api/polls/:id/results", get(api::results::get_poll_results))
+        .route("/api/polls/:id/results/rounds", get(api::results::get_rcv_rounds))
         .layer(CorsLayer::permissive())
         .with_state(auth_service);
 

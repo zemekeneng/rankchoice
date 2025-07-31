@@ -1,3 +1,4 @@
-pub mod user;
+pub mod ballot;
+pub mod candidate;
 pub mod poll;
-pub mod candidate; 
+pub mod user; 

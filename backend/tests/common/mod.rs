@@ -2,6 +2,7 @@ use axum::{routing::{get, post, put, delete}, Router};
 use sqlx::PgPool;
 use tower_http::cors::CorsLayer;
 use uuid::Uuid;
+use serde_json::json;
 
 use rankchoice_api::services::auth::AuthService;
 
@@ -59,6 +60,13 @@ pub async fn create_test_app(pool: PgPool) -> Router {
         .route("/api/polls/:id/candidates/order", put(rankchoice_api::api::candidates::reorder_candidates))
         .route("/api/candidates/:id", put(rankchoice_api::api::candidates::update_candidate))
         .route("/api/candidates/:id", delete(rankchoice_api::api::candidates::delete_candidate))
+        // Voting routes (public)
+        .route("/api/vote/:token", get(rankchoice_api::api::voting::get_ballot))
+        .route("/api/vote/:token", post(rankchoice_api::api::voting::submit_ballot))
+        .route("/api/vote/:token/receipt", get(rankchoice_api::api::voting::get_voting_receipt))
+        // Results routes (protected)
+        .route("/api/polls/:id/results", get(rankchoice_api::api::results::get_poll_results))
+        .route("/api/polls/:id/results/rounds", get(rankchoice_api::api::results::get_rcv_rounds))
         .layer(CorsLayer::permissive())
         .with_state(auth_service)
 }
@@ -68,4 +76,66 @@ async fn health_handler() -> axum::Json<serde_json::Value> {
         "status": "ok",
         "version": env!("CARGO_PKG_VERSION")
     }))
+}
+
+// Test helper functions
+pub async fn setup_test_user(pool: &PgPool) -> Uuid {
+    create_test_user(pool).await
+}
+
+pub async fn create_test_poll(pool: &PgPool) -> Uuid {
+    let user_id = create_test_user(pool).await;
+    
+    let poll_id = sqlx::query!(
+        r#"
+        INSERT INTO polls (user_id, title, description, poll_type, num_winners, is_public, registration_required)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        RETURNING id
+        "#,
+        user_id,
+        "Test Poll",
+        "Test poll description",
+        "single_winner",
+        1,
+        false,
+        false
+    )
+    .fetch_one(pool)
+    .await
+    .unwrap()
+    .id;
+    
+    poll_id
+}
+
+pub async fn create_test_candidates(pool: &PgPool, poll_id: Uuid) -> Vec<Uuid> {
+    let candidates = vec![
+        ("Candidate A", "Description A"),
+        ("Candidate B", "Description B"),
+        ("Candidate C", "Description C"),
+    ];
+    
+    let mut candidate_ids = Vec::new();
+    
+    for (i, (name, description)) in candidates.iter().enumerate() {
+        let candidate_id = sqlx::query!(
+            r#"
+            INSERT INTO candidates (poll_id, name, description, display_order)
+            VALUES ($1, $2, $3, $4)
+            RETURNING id
+            "#,
+            poll_id,
+            name,
+            description,
+            i as i32 + 1
+        )
+        .fetch_one(pool)
+        .await
+        .unwrap()
+        .id;
+        
+        candidate_ids.push(candidate_id);
+    }
+    
+    candidate_ids
 } 
