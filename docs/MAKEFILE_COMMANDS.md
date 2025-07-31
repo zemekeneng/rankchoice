@@ -23,6 +23,10 @@ This document provides comprehensive documentation for all available Makefile co
 | `make quick-start` | Install dependencies and start all services |
 | `make dev-bg` | Start full development environment in background |
 | `make stop` | Stop all development services |
+| `make smart-restart` | Smart restart - no recompilation (fastest for port conflicts) |
+| `make fast-restart` | Fast restart - only recompiles app code (recommended) |
+| `make force-restart` | Force restart with full clean rebuild (slowest) |
+| `make kill-ports` | Kill processes using development ports (8080, 5173) |
 | `make status` | Show status of all services |
 | `make health` | Check health of all services |
 | `make logs` | Show logs from all services |
@@ -93,6 +97,91 @@ make restart
 ```
 
 **Use when:** Services are acting up or you've made configuration changes.
+
+### `make smart-restart`
+**Smart restart - no recompilation (fastest for port conflicts)**
+
+Kills ports and restarts services without any recompilation. Perfect for most port conflicts.
+
+```bash
+make smart-restart
+```
+
+**What it does:**
+1. Kills all cargo run, vite dev, and npm run dev processes
+2. Kills any processes using ports 8080 and 5173
+3. Stops Docker containers with --remove-orphans
+4. Restarts services using existing compiled binaries
+
+**Use when:** 
+- Encountering "port already in use" errors (try this first!)
+- Need quickest possible restart
+- No code changes made since last compilation
+
+**⚡ Speed:** ~5-10 seconds
+
+### `make fast-restart`
+**Fast restart - only recompiles app code (recommended)**
+
+Performs incremental compilation, keeping all dependencies and only rebuilding your application code.
+
+```bash
+make fast-restart
+```
+
+**What it does:**
+1. Kills all processes and clears ports
+2. Stops Docker containers with --remove-orphans
+3. Runs `cargo clean --package rankchoice-api` (keeps dependencies)
+4. Rebuilds only the application code
+5. Starts fresh development environment
+
+**Use when:** 
+- Made code changes and need fresh compilation
+- Want faster rebuild than full clean
+- Most common restart scenario
+
+**⚡ Speed:** ~30-60 seconds (depending on code changes)
+
+### `make force-restart`
+**Force restart with full clean rebuild (slowest)**
+
+Nuclear option that completely cleans and rebuilds everything including all dependencies.
+
+```bash
+make force-restart
+```
+
+**What it does:**
+1. Kills all processes and clears ports
+2. Stops Docker containers with --remove-orphans
+3. Runs `cargo clean` (removes everything)
+4. Rebuilds all dependencies and application code
+5. Starts fresh development environment
+
+**Use when:** 
+- Dependency conflicts or corruption
+- Debugging mysterious compilation issues
+- Need absolutely clean state
+- Last resort when other restarts don't work
+
+**⚡ Speed:** ~3-5 minutes (rebuilds all dependencies)
+
+### `make kill-ports`
+**Kill processes using development ports (8080, 5173)**
+
+Forcefully kills any processes using the development ports.
+
+```bash
+make kill-ports
+```
+
+**What it does:**
+1. Uses `lsof` to find processes using ports 8080 (backend) and 5173 (frontend)
+2. Kills them with `kill -9` (forceful termination)
+3. Waits 1 second for cleanup
+
+**Use when:** Processes are stuck on development ports.
 
 ## Individual Services
 
@@ -586,6 +675,29 @@ make test
 make build
 ```
 
+### Handling Port Conflicts
+```bash
+# Try these in order (fastest to slowest):
+
+# 1. Smart restart (fastest - no recompilation)
+make smart-restart
+
+# 2. Fast restart (if you made code changes)
+make fast-restart
+
+# 3. Force restart (if dependencies are problematic)
+make force-restart
+
+# OR if you need manual control:
+make stop
+make kill-ports
+make dev-bg
+
+# Check what's using the ports (if issues persist)
+lsof -i:8080  # Check backend port
+lsof -i:5173  # Check frontend port
+```
+
 ### Clean Reset
 ```bash
 # Stop everything
@@ -636,9 +748,15 @@ make db-reset    # Reset database if corrupted
 
 **Port conflicts:**
 ```bash
-make stop        # Stop all services
-# Kill any processes using the ports manually
-make dev-bg      # Restart services
+# Try these in order (fastest to slowest):
+make smart-restart  # Fastest: No recompilation
+make fast-restart   # Fast: Only recompile app code  
+make force-restart  # Slowest: Full rebuild
+
+# OR manually:
+make stop           # Stop all services
+make kill-ports     # Kill any lingering processes on ports 8080/5173
+make dev-bg         # Restart services
 ```
 
 **Permission errors:**

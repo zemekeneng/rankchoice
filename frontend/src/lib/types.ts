@@ -23,6 +23,8 @@ export interface Poll {
 	createdAt: string;
 	updatedAt: string;
 	candidates?: Candidate[];
+	candidateCount?: number; // From list view
+	voteCount?: number; // From list view
 }
 
 // Candidate types
@@ -125,6 +127,59 @@ export interface CreatePollForm {
 export interface CreateCandidateForm {
 	name: string;
 	description?: string;
+}
+
+// Authentication types
+export interface AuthTokens {
+	token: string;
+	refreshToken: string;
+}
+
+export interface LoginRequest {
+	email: string;
+	password: string;
+}
+
+export interface RegisterRequest {
+	email: string;
+	password: string;
+	name?: string;
+}
+
+export interface AuthResponse {
+	user: User;
+	token: string;
+	refreshToken: string;
+}
+
+export interface RefreshTokenRequest {
+	refreshToken: string;
+}
+
+// Auth store state
+export interface AuthState {
+	user: User | null;
+	tokens: AuthTokens | null;
+	isAuthenticated: boolean;
+	isLoading: boolean;
+	error: string | null;
+}
+
+// Form validation types
+export interface FormErrors {
+	[key: string]: string[];
+}
+
+export interface LoginForm {
+	email: string;
+	password: string;
+}
+
+export interface RegisterForm {
+	email: string;
+	password: string;
+	confirmPassword: string;
+	name: string;
 }
 
 // DnD types for svelte-dnd-action

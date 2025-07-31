@@ -1,6 +1,6 @@
 # RankChoice.app Development Environment Makefile
 
-.PHONY: help dev dev-bg stop clean install build test docker logs status check-deps
+.PHONY: help dev dev-bg stop clean install build test docker logs status check-deps force-restart kill-ports smart-restart fast-restart
 
 # Default target
 help: ## Show this help message
@@ -38,8 +38,57 @@ stop: ## Stop all development services
 	@pkill -f "cargo run" || true
 	@pkill -f "vite dev" || true
 	@pkill -f "npm run dev" || true
+	@$(MAKE) kill-ports
 	@docker-compose down
 	@echo "✅ All services stopped"
+
+kill-ports: ## Kill processes using development ports (8080, 5173)
+	@echo "🔫 Killing processes using ports 8080 and 5173..."
+	@lsof -ti:8080 | xargs -r kill -9 2>/dev/null || true
+	@lsof -ti:5173 | xargs -r kill -9 2>/dev/null || true
+	@sleep 1
+
+smart-restart: ## Smart restart - kills ports and restarts without recompilation (fastest)
+	@echo "⚡ Smart restarting RankChoice.app (no recompilation)..."
+	@echo "🛑 Stopping all services..."
+	@pkill -f "cargo run" || true
+	@pkill -f "vite dev" || true
+	@pkill -f "npm run dev" || true
+	@$(MAKE) kill-ports
+	@docker-compose down --remove-orphans
+	@echo "🚀 Starting services with existing compilation..."
+	@$(MAKE) dev-bg
+	@echo "✅ Smart restart complete!"
+
+fast-restart: ## Fast restart - only recompiles app code, keeps dependencies (recommended)
+	@echo "🚀 Fast restarting RankChoice.app with incremental compilation..."
+	@echo "🛑 Stopping all services..."
+	@pkill -f "cargo run" || true
+	@pkill -f "vite dev" || true
+	@pkill -f "npm run dev" || true
+	@$(MAKE) kill-ports
+	@docker-compose down --remove-orphans
+	@echo "🔧 Incremental rebuild (keeping dependencies)..."
+	@cd backend && cargo clean --package rankchoice-api
+	@cd backend && cargo build
+	@echo "🚀 Starting fresh environment..."
+	@$(MAKE) dev-bg
+	@echo "✅ Fast restart complete!"
+
+force-restart: ## Force restart with full clean rebuild (slowest, use when dependencies are problematic)
+	@echo "🔄 Force restarting RankChoice.app with full clean compilation..."
+	@echo "🛑 Aggressively stopping all services..."
+	@pkill -f "cargo run" || true
+	@pkill -f "vite dev" || true
+	@pkill -f "npm run dev" || true
+	@$(MAKE) kill-ports
+	@docker-compose down --remove-orphans
+	@echo "🧹 Full clean and rebuild (this will take a while)..."
+	@cd backend && cargo clean
+	@cd backend && cargo build
+	@echo "🚀 Starting fresh environment..."
+	@$(MAKE) dev-bg
+	@echo "✅ Force restart complete!"
 
 # Individual Services
 docker-up: ## Start database and supporting services
@@ -137,18 +186,32 @@ build-frontend: ## Build frontend for production
 	@cd frontend && npm run build
 
 # Testing
-test: ## Run all tests
-	@echo "🧪 Running tests..."
+test: ## Run all tests (backend + frontend unit + E2E)
+	@echo "🧪 Running all tests..."
 	@$(MAKE) test-backend
 	@$(MAKE) test-frontend
+	@$(MAKE) test-e2e
 
 test-backend: ## Run backend tests
 	@echo "🦀 Running Rust tests..."
 	@cd backend && cargo test
 
 test-frontend: ## Run frontend tests
-	@echo "💻 Running frontend tests..."
-	@cd frontend && npm test
+	@echo "💻 Running frontend unit tests..."
+	@cd frontend && npm run test:unit -- --run
+
+test-e2e: ## Run E2E tests (requires dev environment)
+	@echo "🧪 Running E2E tests..."
+	@echo "⚠️  Ensure dev environment is running (make dev-bg)"
+	@cd frontend && npm run test:e2e
+
+test-e2e-headed: ## Run E2E tests with browser UI
+	@echo "🧪 Running E2E tests (headed mode)..."
+	@cd frontend && npm run test:e2e:headed
+
+test-e2e-debug: ## Debug E2E tests interactively
+	@echo "🧪 Debugging E2E tests..."
+	@cd frontend && npm run test:e2e:debug
 
 # Utilities
 clean: ## Clean all build artifacts and dependencies

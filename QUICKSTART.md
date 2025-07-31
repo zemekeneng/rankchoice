@@ -149,6 +149,10 @@ npm run build
 ### Deploy to Staging
 
 ```bash
+# Using Make commands (recommended)
+make deploy-staging
+
+# Or manually with Terraform
 cd infrastructure/terraform
 terraform workspace select staging
 terraform plan
@@ -158,11 +162,51 @@ terraform apply
 ### Deploy to Production
 
 ```bash
+# Using Make commands (recommended) 
+make deploy-prod
+
+# Or manually with Terraform
 cd infrastructure/terraform
 terraform workspace select prod
 terraform plan
 terraform apply -auto-approve=false
 ```
+
+## Development Workflow with Make
+
+The project includes a comprehensive Makefile for managing the development environment. Here are the most commonly used commands:
+
+### Quick Start
+```bash
+make quick-start    # Install dependencies and start all services
+make dev-bg         # Start development environment in background
+make stop           # Stop all services
+make restart        # Restart all services
+```
+
+### Monitoring
+```bash
+make status         # Check status of all services
+make health         # Check health of all services
+make logs           # Show logs from all services
+make logs-follow    # Follow logs in real-time
+```
+
+### Development Tasks
+```bash
+make test           # Run all tests
+make fmt            # Format code
+make lint           # Lint code
+make build          # Build for production
+```
+
+### Database Management
+```bash
+make db-migrate     # Run database migrations
+make db-reset       # Reset database completely
+```
+
+**📖 For complete documentation of all available commands, see [Makefile Commands Documentation](./docs/MAKEFILE_COMMANDS.md)**
 
 ## Useful Commands
 
