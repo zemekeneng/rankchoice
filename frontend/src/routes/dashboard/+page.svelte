@@ -134,6 +134,7 @@
 		</div>
 		<div class="mt-4 flex md:mt-0 md:ml-4">
 			<button
+				data-testid="create-poll-btn"
 				onclick={createPoll}
 				class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
 			>
@@ -214,14 +215,14 @@
 			</div>
 		{:else if polls.length === 0}
 			<!-- Empty state - Onboarding -->
-			<div class="text-center py-12">
+			<div class="text-center py-12" data-testid="empty-state">
 				<div class="mx-auto h-24 w-24 text-indigo-600 mb-4">
 					<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
 					</svg>
 				</div>
-				<h3 class="text-lg font-medium text-gray-900">Welcome to RankChoice!</h3>
-				<p class="mt-2 text-sm text-gray-600 max-w-md mx-auto">
+				<h3 class="text-lg font-medium text-gray-900" data-testid="welcome-heading">Welcome to RankChoice!</h3>
+				<p class="mt-2 text-sm text-gray-600 max-w-md mx-auto" data-testid="welcome-description">
 					Create your first ranked-choice voting poll to get started. It's easy: add candidates, 
 					distribute voting links, and let voters rank their preferences.
 				</p>
@@ -259,6 +260,7 @@
 
 				<div class="mt-8">
 					<button
+						data-testid="create-first-poll-btn"
 						onclick={createPoll}
 						class="inline-flex items-center px-6 py-3 border border-transparent shadow-sm text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
 					>
@@ -276,28 +278,29 @@
 					{#each polls as poll (poll.id)}
 						<li>
 							<button
+								data-testid="poll-item-{poll.id}"
 								onclick={() => viewPoll(poll.id)}
 								class="block hover:bg-gray-50 w-full text-left"
 							>
 								<div class="px-4 py-4 sm:px-6">
 									<div class="flex items-center justify-between">
 										<div class="flex items-center">
-											<p class="text-sm font-medium text-indigo-600 truncate">
+											<p class="text-sm font-medium text-indigo-600 truncate" data-testid="poll-title-{poll.id}">
 												{poll.title}
 											</p>
-											<span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {getStatusColor(getPollStatus(poll))}">
+											<span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {getStatusColor(getPollStatus(poll))}" data-testid="poll-status-{poll.id}">
 												{getPollStatus(poll)}
 											</span>
 										</div>
 										<div class="ml-2 flex-shrink-0 flex">
-											<p class="text-sm text-gray-500">
+											<p class="text-sm text-gray-500" data-testid="poll-type-{poll.id}">
 												{poll.pollType === 'single_winner' ? 'Single Winner' : `Multi Winner (${poll.numWinners})`}
 											</p>
 										</div>
 									</div>
 									<div class="mt-2 sm:flex sm:justify-between">
 										<div class="sm:flex">
-											<p class="flex items-center text-sm text-gray-500">
+											<p class="flex items-center text-sm text-gray-500" data-testid="poll-description-{poll.id}">
 												{#if poll.description}
 													{poll.description}
 												{:else}
@@ -306,7 +309,7 @@
 											</p>
 										</div>
 										<div class="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
-											<p>
+											<p data-testid="poll-created-{poll.id}">
 												Created {formatDate(poll.createdAt)}
 											</p>
 										</div>

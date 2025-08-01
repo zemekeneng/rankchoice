@@ -138,18 +138,7 @@ class APIClient {
 		// Transform backend response format to frontend expected format
 		return {
 			polls: response.data!.items.map((poll: any) => ({
-				id: poll.id,
-				userId: poll.user_id,
-				title: poll.title,
-				description: poll.description,
-				pollType: poll.poll_type,
-				numWinners: poll.num_winners,
-				opensAt: poll.opens_at,
-				closesAt: poll.closes_at,
-				isPublic: poll.is_public,
-				registrationRequired: poll.registration_required,
-				createdAt: poll.created_at,
-				updatedAt: poll.updated_at,
+				...this.mapPollFromApi(poll),
 				candidateCount: poll.candidate_count,
 				voteCount: poll.vote_count
 			})),
@@ -160,9 +149,11 @@ class APIClient {
 
 	async getPoll(id: string): Promise<Poll> {
 		const response = await this.request<any>(`/polls/${id}`);
-		const poll = response.data!;
 		
-		// Transform snake_case to camelCase
+		return this.mapPollFromApi(response.data!);
+	}
+
+	private mapPollFromApi(poll: any): Poll {
 		return {
 			id: poll.id,
 			userId: poll.user_id,
@@ -192,31 +183,8 @@ class APIClient {
 			method: 'POST',
 			body: JSON.stringify(pollData)
 		});
-		const poll = response.data!;
 		
-		// Transform snake_case to camelCase
-		return {
-			id: poll.id,
-			userId: poll.user_id,
-			title: poll.title,
-			description: poll.description,
-			pollType: poll.poll_type,
-			numWinners: poll.num_winners,
-			opensAt: poll.opens_at,
-			closesAt: poll.closes_at,
-			isPublic: poll.is_public,
-			registrationRequired: poll.registration_required,
-			createdAt: poll.created_at,
-			updatedAt: poll.updated_at,
-			candidates: poll.candidates?.map((candidate: any) => ({
-				id: candidate.id,
-				pollId: candidate.poll_id,
-				name: candidate.name,
-				description: candidate.description,
-				displayOrder: candidate.display_order,
-				createdAt: candidate.created_at
-			}))
-		};
+		return this.mapPollFromApi(response.data!);
 	}
 
 	async updatePoll(id: string, pollData: Partial<CreatePollForm>): Promise<Poll> {
@@ -279,10 +247,17 @@ class APIClient {
 		
 		try {
 			const response = await this.request<{
-				poll: Poll;
+				poll: any; // Raw API response
 				voter: { id: string; has_voted: boolean };
 			}>(`/vote/${token}`);
-			return response.data!;
+			
+			// Map the poll data to match frontend types
+			const mappedData = {
+				poll: this.mapPollFromApi(response.data!.poll),
+				voter: response.data!.voter
+			};
+			
+			return mappedData;
 		} finally {
 			this.setAuthToken(originalToken);
 		}

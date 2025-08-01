@@ -31,7 +31,7 @@
 		<div class="max-w-7xl mx-auto px-4">
 			<div class="flex justify-between h-16">
 				<div class="flex items-center">
-					<a href="/" class="flex-shrink-0 flex items-center">
+					<a href="/" class="flex-shrink-0 flex items-center" data-testid="home-link">
 						<h1 class="text-xl font-bold text-gray-900">RankChoice</h1>
 					</a>
 				</div>
@@ -39,16 +39,18 @@
 				<div class="flex items-center space-x-4">
 					{#if authStore.isAuthenticated}
 						<!-- Authenticated user menu -->
-						<span class="text-gray-700">
+						<span class="text-gray-700" data-testid="welcome-text">
 							Welcome, {authStore.displayName}
 						</span>
 						<button
+							data-testid="dashboard-btn"
 							onclick={goToDashboard}
 							class="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium"
 						>
 							Dashboard
 						</button>
 						<button
+							data-testid="logout-btn"
 							onclick={handleLogout}
 							class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium"
 						>
@@ -58,12 +60,14 @@
 						<!-- Guest menu -->
 						<a
 							href="/login"
+							data-testid="login-link"
 							class="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium"
 						>
 							Login
 						</a>
 						<a
 							href="/register"
+							data-testid="register-link"
 							class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium"
 						>
 							Sign Up

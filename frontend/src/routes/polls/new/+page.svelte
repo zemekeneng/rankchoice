@@ -137,7 +137,7 @@
 
 	// Pure validation function (no state mutation)
 	function checkFormValid(): boolean {
-		const dateValidation = validateDates(pollForm.opensAt, pollForm.closesAt);
+		const dateValidation = validateDates(pollForm.opensAt || '', pollForm.closesAt || '');
 		
 		const formErrors = {
 			title: validateTitle(pollForm.title),
@@ -153,7 +153,7 @@
 
 	// Validate and update errors state
 	function validateForm(): boolean {
-		const dateValidation = validateDates(pollForm.opensAt, pollForm.closesAt);
+		const dateValidation = validateDates(pollForm.opensAt || '', pollForm.closesAt || '');
 		
 		errors = {
 			title: validateTitle(pollForm.title),
@@ -295,7 +295,7 @@
 				<div class="mt-3">
 					<div class="flex items-center justify-between mb-4">
 						<h3 class="text-lg font-medium text-gray-900">Poll Preview</h3>
-						<button onclick={() => showPreview = false} class="text-gray-400 hover:text-gray-600">
+						<button data-testid="close-preview-btn" onclick={() => showPreview = false} class="text-gray-400 hover:text-gray-600">
 							<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
 							</svg>
@@ -392,6 +392,7 @@
 							<input
 								type="text"
 								id="title"
+								data-testid="poll-title-input"
 								bind:value={pollForm.title}
 								oninput={() => clearFieldError('title')}
 								class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
@@ -415,6 +416,7 @@
 							</label>
 							<textarea
 								id="description"
+								data-testid="poll-description-input"
 								rows="3"
 								bind:value={pollForm.description}
 								oninput={() => clearFieldError('description')}
@@ -456,6 +458,7 @@
 									<input
 										type="radio"
 										name="pollType"
+										data-testid="single-winner-radio"
 										bind:group={pollForm.pollType}
 										value="single_winner"
 										onchange={handlePollTypeChange}
@@ -470,6 +473,7 @@
 									<input
 										type="radio"
 										name="pollType"
+										data-testid="multi-winner-radio"
 										bind:group={pollForm.pollType}
 										value="multi_winner"
 										onchange={handlePollTypeChange}
@@ -492,6 +496,7 @@
 								<input
 									type="number"
 									id="numWinners"
+									data-testid="num-winners-input"
 									bind:value={pollForm.numWinners}
 									min="2"
 									max={Math.max(2, validCandidates.length - 1)}
@@ -650,6 +655,7 @@
 										<input
 											type="text"
 											id="candidate-name-{index}"
+											data-testid="candidate-name-{index}"
 											bind:value={candidate.name}
 											oninput={() => clearFieldError('candidates')}
 											class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm"
@@ -676,6 +682,7 @@
 						<!-- Add Candidate Button -->
 						<button
 							type="button"
+							data-testid="add-candidate-btn"
 							onclick={addCandidate}
 							class="w-full border-2 border-dashed border-gray-300 rounded-lg p-4 text-gray-600 hover:border-indigo-300 hover:text-indigo-600 hover:bg-indigo-50 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
 						>
@@ -701,7 +708,7 @@
 
 		<!-- Submit Error -->
 		{#if submitError}
-			<div class="bg-red-50 border border-red-200 rounded-md p-4">
+			<div class="bg-red-50 border border-red-200 rounded-md p-4" data-testid="poll-creation-error">
 				<div class="flex">
 					<div class="flex-shrink-0">
 						<svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -717,6 +724,7 @@
 					<div class="ml-auto pl-3">
 						<div class="-mx-1.5 -my-1.5">
 							<button
+								data-testid="dismiss-error-btn"
 								onclick={() => submitError = null}
 								class="inline-flex bg-red-50 rounded-md p-1.5 text-red-500 hover:bg-red-100"
 							>
@@ -731,9 +739,10 @@
 		{/if}
 
 		<!-- Actions -->
-		<div class="flex justify-end space-x-3">
+		<div class="flex justify-end space-x-3" data-testid="form-actions">
 			<button
 				type="button"
+				data-testid="cancel-poll-btn"
 				onclick={() => goto('/dashboard')}
 				class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50"
 			>
@@ -742,6 +751,7 @@
 			
 			<button
 				type="button"
+				data-testid="preview-poll-btn"
 				onclick={togglePreview}
 				disabled={!isFormValid}
 				class="bg-gray-600 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-gray-700 disabled:opacity-50"
@@ -751,6 +761,7 @@
 			
 			<button
 				type="submit"
+				data-testid="create-poll-submit-btn"
 				disabled={isSubmitting}
 				class="bg-indigo-600 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
 			>

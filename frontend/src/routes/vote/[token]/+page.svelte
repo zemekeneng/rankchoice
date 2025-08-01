@@ -131,12 +131,12 @@
 <div class="min-h-screen bg-gray-50 py-8">
 	<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
 		{#if loading}
-			<div class="text-center py-12">
+			<div class="text-center py-12" data-testid="voting-loading">
 				<div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
 				<p class="mt-4 text-gray-600">Loading ballot...</p>
 			</div>
 		{:else if error}
-			<div class="bg-red-50 border border-red-200 rounded-md p-4">
+			<div class="bg-red-50 border border-red-200 rounded-md p-4" data-testid="voting-error">
 				<div class="flex">
 					<div class="flex-shrink-0">
 						<svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
@@ -149,30 +149,45 @@
 					</div>
 				</div>
 			</div>
-		{:else if submitted || hasVoted}
-			<!-- Vote submitted or already voted -->
-			<div class="bg-white shadow rounded-lg">
-				<div class="px-6 py-8 text-center">
-					<div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100">
-						<svg class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-						</svg>
-					</div>
-					<h1 class="mt-4 text-2xl font-bold text-gray-900">Vote Submitted!</h1>
-					<p class="mt-2 text-gray-600">Thank you for participating in: <strong>{poll?.title}</strong></p>
-					
-					{#if receipt}
-						<div class="mt-6 bg-gray-50 rounded-lg p-4">
-							<h3 class="text-sm font-medium text-gray-900">Your Receipt</h3>
-							<p class="mt-1 text-sm text-gray-600">Receipt Code: <code class="bg-white px-2 py-1 rounded">{receipt.receipt_code}</code></p>
-							<p class="mt-1 text-xs text-gray-500">Save this code for your records</p>
+		{:else if submitted}
+			<!-- Receipt -->
+			<div class="bg-white shadow rounded-lg" data-testid="voting-receipt">
+				<div class="px-6 py-4 border-b border-gray-200">
+					<h1 class="text-2xl font-bold text-green-600" data-testid="vote-success-heading">Vote Submitted Successfully!</h1>
+					<p class="mt-2 text-gray-600" data-testid="vote-success-message">Thank you for participating in this ranked-choice voting poll.</p>
+				</div>
+				
+				{#if receipt}
+					<div class="p-6">
+						<h2 class="text-lg font-medium text-gray-900 mb-4" data-testid="receipt-heading">Your Voting Receipt</h2>
+						<div class="bg-gray-50 rounded-lg p-4" data-testid="receipt-content">
+							<dl class="space-y-2">
+								<div>
+									<dt class="text-sm font-medium text-gray-500">Poll:</dt>
+									<dd class="text-sm text-gray-900" data-testid="receipt-poll-title">{poll?.title}</dd>
+								</div>
+								<div>
+									<dt class="text-sm font-medium text-gray-500">Verification Code:</dt>
+									<dd class="text-sm font-mono text-gray-900" data-testid="receipt-verification-code">{receipt.verification_code}</dd>
+								</div>
+								<div>
+									<dt class="text-sm font-medium text-gray-500">Submitted At:</dt>
+									<dd class="text-sm text-gray-900" data-testid="receipt-submitted-at">{new Date(receipt.submitted_at).toLocaleString()}</dd>
+								</div>
+							</dl>
 						</div>
-					{/if}
-
-					<div class="mt-6">
+						<p class="mt-4 text-sm text-gray-500" data-testid="receipt-instructions">
+							Keep this verification code for your records. You can use it to verify your vote was counted.
+						</p>
+					</div>
+				{/if}
+				
+				<div class="px-6 py-4 border-t border-gray-200">
+					<div class="text-center">
 						<button
+							data-testid="return-home-btn"
 							onclick={() => goto('/')}
-							class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+							class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
 						>
 							Return to Home
 						</button>
@@ -181,24 +196,24 @@
 			</div>
 		{:else if poll}
 			<!-- Voting interface -->
-			<div class="bg-white shadow rounded-lg">
-				<div class="px-6 py-4 border-b border-gray-200">
-					<h1 class="text-2xl font-bold text-gray-900">{poll.title}</h1>
+			<div class="bg-white shadow rounded-lg" data-testid="voting-interface">
+				<div class="px-6 py-4 border-b border-gray-200" data-testid="poll-header">
+					<h1 class="text-2xl font-bold text-gray-900" data-testid="poll-title">{poll.title}</h1>
 					{#if poll.description}
-						<p class="mt-2 text-gray-600">{poll.description}</p>
+						<p class="mt-2 text-gray-600" data-testid="poll-description">{poll.description}</p>
 					{/if}
-					<div class="mt-3 flex flex-wrap gap-2 text-sm text-gray-500">
-						<span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800">
+					<div class="mt-3 flex flex-wrap gap-2 text-sm text-gray-500" data-testid="poll-info">
+						<span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800" data-testid="poll-type-badge">
 							{poll.pollType === 'single_winner' ? 'Single Winner' : `${poll.numWinners} Winners`}
 						</span>
-						<span>Ranked Choice Voting</span>
+						<span data-testid="voting-method">Ranked Choice Voting</span>
 					</div>
 				</div>
 
 				<div class="p-6">
 					<div class="mb-6">
-						<h2 class="text-lg font-medium text-gray-900 mb-2">Instructions</h2>
-						<div class="bg-blue-50 border border-blue-200 rounded-md p-4">
+						<h2 class="text-lg font-medium text-gray-900 mb-2" data-testid="instructions-heading">Instructions</h2>
+						<div class="bg-blue-50 border border-blue-200 rounded-md p-4" data-testid="voting-instructions">
 							<p class="text-sm text-blue-800">
 								Drag and drop candidates to rank them in order of your preference. Your #1 choice should be at the top.
 								You can rank as many or as few candidates as you like.
@@ -210,9 +225,10 @@
 					<div class="lg:grid lg:grid-cols-2 lg:gap-6">
 						<!-- Ranked Candidates (Left side on desktop) -->
 						<div class="mb-6 lg:mb-0">
-							<h3 class="text-md font-medium text-gray-900 mb-3">Your Rankings</h3>
+							<h3 class="text-md font-medium text-gray-900 mb-3" data-testid="ranked-section-heading">Your Rankings</h3>
 							<div 
 								class="min-h-32 bg-green-50 border-2 border-green-200 border-dashed rounded-lg p-4"
+								data-testid="ranked-candidates-zone"
 								use:dndzone={{
 									items: rankedCandidates,
 									flipDurationMs: 200,
@@ -222,25 +238,26 @@
 								onfinalize={handleRankedDrop}
 							>
 								{#if rankedCandidates.length === 0}
-									<p class="text-green-600 text-center py-8">Drop candidates here to rank them</p>
+									<p class="text-green-600 text-center py-8" data-testid="ranked-empty-state">Drop candidates here to rank them</p>
 								{:else}
 									{#each rankedCandidates as candidate (candidate.id)}
-										<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3 mb-2 cursor-move hover:shadow-md transition-shadow">
+										<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3 mb-2 cursor-move hover:shadow-md transition-shadow" data-testid="ranked-candidate-{candidate.id.replace('_drag', '')}">
 											<div class="flex items-center justify-between">
 												<div class="flex items-center space-x-3">
-													<div class="flex-shrink-0 w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+													<div class="flex-shrink-0 w-8 h-8 bg-green-100 rounded-full flex items-center justify-center" data-testid="candidate-rank-badge-{candidate.id.replace('_drag', '')}">
 														<span class="text-sm font-medium text-green-800">#{candidate.rank}</span>
 													</div>
 													<div>
-														<h4 class="text-sm font-medium text-gray-900">{candidate.name}</h4>
+														<h4 class="text-sm font-medium text-gray-900" data-testid="ranked-candidate-name-{candidate.id.replace('_drag', '')}">{candidate.name}</h4>
 														{#if candidate.description}
-															<p class="text-xs text-gray-500">{candidate.description}</p>
+															<p class="text-xs text-gray-500" data-testid="ranked-candidate-description-{candidate.id.replace('_drag', '')}">{candidate.description}</p>
 														{/if}
 													</div>
 												</div>
 												<button
-																								onclick={() => unrankCandidate(candidate)}
-											class="text-gray-400 hover:text-gray-600 focus:outline-none"
+													data-testid="unrank-candidate-btn-{candidate.id.replace('_drag', '')}"
+													onclick={() => unrankCandidate(candidate)}
+													class="text-gray-400 hover:text-gray-600 focus:outline-none"
 													disabled={submitting}
 												>
 													<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -254,11 +271,12 @@
 							</div>
 						</div>
 
-						<!-- Available Candidates (Right side on desktop) -->
+						<!-- Unranked Candidates (Right side on desktop) -->
 						<div>
-							<h3 class="text-md font-medium text-gray-900 mb-3">Available Candidates</h3>
+							<h3 class="text-md font-medium text-gray-900 mb-3" data-testid="unranked-section-heading">Available Candidates</h3>
 							<div 
 								class="min-h-32 bg-gray-50 border-2 border-gray-200 border-dashed rounded-lg p-4"
+								data-testid="unranked-candidates-zone"
 								use:dndzone={{
 									items: unrankedCandidates,
 									flipDurationMs: 200,
@@ -268,20 +286,21 @@
 								onfinalize={handleUnrankedDrop}
 							>
 								{#if unrankedCandidates.length === 0}
-									<p class="text-gray-500 text-center py-8">All candidates have been ranked</p>
+									<p class="text-gray-500 text-center py-8" data-testid="unranked-empty-state">All candidates have been ranked</p>
 								{:else}
 									{#each unrankedCandidates as candidate (candidate.id)}
-										<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3 mb-2 cursor-move hover:shadow-md transition-shadow">
+										<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3 mb-2 cursor-move hover:shadow-md transition-shadow" data-testid="unranked-candidate-{candidate.id.replace('_drag', '')}">
 											<div class="flex items-center justify-between">
 												<div>
-													<h4 class="text-sm font-medium text-gray-900">{candidate.name}</h4>
+													<h4 class="text-sm font-medium text-gray-900" data-testid="unranked-candidate-name-{candidate.id.replace('_drag', '')}">{candidate.name}</h4>
 													{#if candidate.description}
-														<p class="text-xs text-gray-500">{candidate.description}</p>
+														<p class="text-xs text-gray-500" data-testid="unranked-candidate-description-{candidate.id.replace('_drag', '')}">{candidate.description}</p>
 													{/if}
 												</div>
 												<button
-																								onclick={() => rankCandidate(candidate)}
-											class="text-indigo-600 hover:text-indigo-800 focus:outline-none text-sm font-medium"
+													data-testid="rank-candidate-btn-{candidate.id.replace('_drag', '')}"
+													onclick={() => rankCandidate(candidate)}
+													class="text-indigo-600 hover:text-indigo-800 focus:outline-none text-sm font-medium"
 													disabled={submitting}
 												>
 													Rank
@@ -295,15 +314,15 @@
 					</div>
 
 					<!-- Submit Section -->
-					<div class="mt-8 border-t border-gray-200 pt-6">
+					<div class="mt-8 border-t border-gray-200 pt-6" data-testid="submit-section">
 						{#if error}
-							<div class="mb-4 bg-red-50 border border-red-200 rounded-md p-3">
+							<div class="mb-4 bg-red-50 border border-red-200 rounded-md p-3" data-testid="submit-error">
 								<p class="text-sm text-red-600">{error}</p>
 							</div>
 						{/if}
 
 						<div class="flex justify-between items-center">
-							<div class="text-sm text-gray-600">
+							<div class="text-sm text-gray-600" data-testid="ranking-summary">
 								{#if rankedCandidates.length > 0}
 									<p>You have ranked {rankedCandidates.length} candidate{rankedCandidates.length === 1 ? '' : 's'}</p>
 								{:else}
@@ -312,8 +331,9 @@
 							</div>
 							
 							<button
-															onclick={submitBallot}
-							disabled={!canSubmit}
+								data-testid="submit-ballot-btn"
+								onclick={submitBallot}
+								disabled={!canSubmit}
 								class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-gray-300 disabled:cursor-not-allowed"
 							>
 								{#if submitting}

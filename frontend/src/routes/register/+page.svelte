@@ -127,12 +127,12 @@
 <div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
 	<div class="max-w-md w-full space-y-8">
 		<div>
-			<h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
+			<h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900" data-testid="register-heading">
 				Create your account
 			</h2>
 			<p class="mt-2 text-center text-sm text-gray-600">
 				Or
-				<a href="/login" class="font-medium text-indigo-600 hover:text-indigo-500">
+				<a href="/login" class="font-medium text-indigo-600 hover:text-indigo-500" data-testid="sign-in-link">
 					sign in to your existing account
 				</a>
 			</p>
@@ -148,6 +148,7 @@
 						id="name"
 						name="name"
 						type="text"
+						data-testid="name-input"
 						autocomplete="name"
 						required
 						class="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
@@ -176,6 +177,7 @@
 						id="email"
 						name="email"
 						type="email"
+						data-testid="register-email-input"
 						autocomplete="email"
 						required
 						class="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
@@ -204,6 +206,7 @@
 						id="password"
 						name="password"
 						type="password"
+						data-testid="register-password-input"
 						autocomplete="new-password"
 						required
 						class="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
@@ -232,6 +235,7 @@
 						id="confirmPassword"
 						name="confirmPassword"
 						type="password"
+						data-testid="confirm-password-input"
 						autocomplete="new-password"
 						required
 						class="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
@@ -255,7 +259,7 @@
 
 			<!-- Global Error -->
 			{#if authStore.error}
-				<div class="bg-red-50 border border-red-200 rounded-md p-4">
+				<div class="bg-red-50 border border-red-200 rounded-md p-4" data-testid="register-error">
 					<div class="flex">
 						<div class="flex-shrink-0">
 							<svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -277,6 +281,7 @@
 			<div>
 				<button
 					type="submit"
+					data-testid="register-submit-btn"
 					disabled={isSubmitting || authStore.isLoading}
 					class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
 				>
@@ -293,7 +298,7 @@
 			</div>
 
 			<div class="text-center">
-				<a href="/" class="font-medium text-indigo-600 hover:text-indigo-500">
+				<a href="/" class="font-medium text-indigo-600 hover:text-indigo-500" data-testid="register-back-home-link">
 					← Back to home
 				</a>
 			</div>
