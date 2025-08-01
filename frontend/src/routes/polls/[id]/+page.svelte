@@ -4,6 +4,7 @@
 	import { goto } from '$app/navigation';
 	import { authStore } from '$lib/stores/auth.svelte.js';
 	import { apiClient } from '$lib/api/client.js';
+	import RCVVisualization from '$lib/components/RCVVisualization.svelte';
 	import type { Poll, Candidate, PollResults, RCVRound, Voter, VotersListResponse, CreateVoterRequest } from '$lib/types.js';
 
 	// Get poll ID from URL
@@ -30,6 +31,8 @@
 			goto('/login');
 		}
 	});
+
+
 
 	// Load poll data
 	async function loadPoll() {
@@ -64,7 +67,7 @@
 				results = await apiClient.getPollResults(currentPollId);
 				const roundsData = await apiClient.getRCVRounds(currentPollId);
 				rounds = roundsData.rounds;
-			} catch (resultsError) {
+			} catch (resultsError: any) {
 				// Results not available yet - this is okay
 				results = null;
 				rounds = [];
@@ -137,9 +140,14 @@
 	// Handle tab change
 	async function handleTabChange(tab: 'overview' | 'voters' | 'results') {
 		activeTab = tab;
-		if (tab === 'voters' && voters.length === 0) {
+		
+		// Load data specific to the tab
+		if (tab === 'voters' && voters.length === 0 && !votersLoading) {
 			await loadVoters();
 		}
+		
+		// For results tab, we already try to load results in loadPoll
+		// so no additional loading is needed
 	}
 
 	// Copy to clipboard
@@ -206,12 +214,99 @@
 		alert('Voting link functionality will be implemented when voter management is added');
 	}
 
-	// Share results (placeholder)
+	// Share results
 	function shareResults() {
 		if (poll) {
 			const url = `${window.location.origin}/polls/${poll.id}/results`;
 			navigator.clipboard.writeText(url);
 			alert('Results link copied to clipboard!');
+		}
+	}
+
+	// Export functions
+	function exportToCSV() {
+		if (!results || !poll) return;
+
+		const csvData = [];
+		
+		// Header
+		csvData.push(['Poll Title', poll.title]);
+		csvData.push(['Total Votes', results.totalVotes.toString()]);
+		csvData.push(['Poll Type', poll.pollType === 'single_winner' ? 'Single Winner' : `${poll.numWinners} Winners`]);
+		csvData.push(['Export Date', new Date().toISOString()]);
+		csvData.push([]); // Empty row
+
+		// Winner
+		if (results.winner) {
+			csvData.push(['Winner', results.winner.name, `${results.winner.finalVotes} votes`, `${results.winner.percentage.toFixed(1)}%`]);
+			csvData.push([]); // Empty row
+		}
+
+		// Final Rankings
+		csvData.push(['Final Rankings']);
+		csvData.push(['Position', 'Candidate', 'Votes', 'Percentage', 'Eliminated Round']);
+		results.finalRankings.forEach(ranking => {
+			csvData.push([
+				ranking.position.toString(),
+				ranking.name,
+				ranking.votes.toString(),
+				`${ranking.percentage.toFixed(1)}%`,
+				ranking.eliminatedRound?.toString() || 'N/A'
+			]);
+		});
+
+		// RCV Rounds
+		if (rounds.length > 0) {
+			csvData.push([]); // Empty row
+			csvData.push(['RCV Rounds']);
+			
+			// Round headers
+			const roundHeaders = ['Round', ...candidates.map(c => c.name), 'Eliminated', 'Winner'];
+			csvData.push(roundHeaders);
+			
+			rounds.forEach(round => {
+				const rowData = [
+					round.roundNumber.toString(),
+					...candidates.map(c => (round.voteCounts[c.id] || 0).toString()),
+					round.eliminated ? candidates.find(c => c.id === round.eliminated)?.name || '' : '',
+					round.winner ? candidates.find(c => c.id === round.winner)?.name || '' : ''
+				];
+				csvData.push(rowData);
+			});
+		}
+
+		// Convert to CSV string
+		const csvString = csvData.map(row => 
+			row.map(cell => 
+				typeof cell === 'string' && cell.includes(',') ? `"${cell}"` : cell
+			).join(',')
+		).join('\n');
+
+		// Download
+		const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+		const link = document.createElement('a');
+		const url = URL.createObjectURL(blob);
+		link.setAttribute('href', url);
+		link.setAttribute('download', `${poll.title.replace(/[^a-z0-9]/gi, '_')}_results.csv`);
+		link.style.visibility = 'hidden';
+		document.body.appendChild(link);
+		link.click();
+		document.body.removeChild(link);
+	}
+
+	function exportToPDF() {
+		if (!poll) return;
+		
+		// Open results page in new window for printing/PDF
+		const resultsUrl = `${window.location.origin}/polls/${poll.id}/results`;
+		const printWindow = window.open(resultsUrl, '_blank');
+		
+		if (printWindow) {
+			printWindow.onload = () => {
+				setTimeout(() => {
+					printWindow.print();
+				}, 1000);
+			};
 		}
 	}
 
@@ -494,12 +589,30 @@
 						{#if results}
 							<button
 								onclick={shareResults}
-								class="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
+								class="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 mb-2"
 							>
 								<svg class="h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
 								</svg>
 								Share Results
+							</button>
+							<button
+								onclick={exportToCSV}
+								class="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 mb-2"
+							>
+								<svg class="h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+								</svg>
+								Export CSV
+							</button>
+							<button
+								onclick={exportToPDF}
+								class="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
+							>
+								<svg class="h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H9.5a1 1 0 01-1-1V8a2 2 0 012-2h11m-7 10V6.5a1.5 1.5 0 00-3 0V17m-4-4h3m3 0h3" />
+								</svg>
+								Export PDF
 							</button>
 						{/if}
 						<button
@@ -711,7 +824,7 @@
 			</div>
 		{:else if activeTab === 'results'}
 			<!-- Results -->
-			{#if results && results.totalVotes > 0}
+			{#if results && results.total_votes > 0}
 				<div class="space-y-6">
 					<!-- Winner Announcement -->
 					{#if results.winner}
@@ -727,7 +840,7 @@
 										🏆 Winner: {results.winner.name}
 									</h3>
 									<p class="mt-1 text-sm text-green-700">
-										Won with {results.winner.finalVotes} votes ({results.winner.percentage.toFixed(1)}% of total)
+										Won with {results.winner.final_votes} votes ({results.winner.percentage.toFixed(1)}% of total)
 									</p>
 								</div>
 							</div>
@@ -740,7 +853,7 @@
 							<h3 class="text-lg font-medium text-gray-900">Final Rankings</h3>
 						</div>
 						<ul class="divide-y divide-gray-200">
-							{#each results.finalRankings as ranking}
+							{#each results.final_rankings as ranking}
 								<li class="px-6 py-4">
 									<div class="flex items-center justify-between">
 										<div class="flex items-center">
@@ -749,8 +862,8 @@
 											</span>
 											<div>
 												<h4 class="text-sm font-medium text-gray-900">{ranking.name}</h4>
-												{#if ranking.eliminatedRound}
-													<p class="text-xs text-gray-500">Eliminated in round {ranking.eliminatedRound}</p>
+												{#if ranking.eliminated_round}
+													<p class="text-xs text-gray-500">Eliminated in round {ranking.eliminated_round}</p>
 												{/if}
 											</div>
 										</div>
@@ -764,54 +877,13 @@
 						</ul>
 					</div>
 
-					<!-- RCV Rounds -->
-					{#if rounds.length > 1}
-						<div class="bg-white shadow rounded-lg">
-							<div class="px-6 py-4 border-b border-gray-200">
-								<h3 class="text-lg font-medium text-gray-900">RCV Elimination Rounds</h3>
-								<p class="text-sm text-gray-500">Round-by-round vote counting and eliminations</p>
-							</div>
-							<div class="overflow-x-auto">
-								<table class="min-w-full divide-y divide-gray-200">
-									<thead class="bg-gray-50">
-										<tr>
-											<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-												Round
-											</th>
-											{#each candidates as candidate}
-												<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-													{candidate.name}
-												</th>
-											{/each}
-											<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-												Action
-											</th>
-										</tr>
-									</thead>
-									<tbody class="bg-white divide-y divide-gray-200">
-										{#each rounds as round}
-											<tr>
-												<td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-													{round.roundNumber}
-												</td>
-												{#each candidates as candidate}
-													<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-														{round.voteCounts[candidate.id] || 0}
-													</td>
-												{/each}
-												<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-													{#if round.winner}
-														<span class="text-green-600 font-medium">Winner!</span>
-													{:else if round.eliminated}
-														<span class="text-red-600">Eliminated: {candidates.find(c => c.id === round.eliminated)?.name}</span>
-													{/if}
-												</td>
-											</tr>
-										{/each}
-									</tbody>
-								</table>
-							</div>
-						</div>
+					<!-- Enhanced RCV Visualization -->
+					{#if rounds.length > 0}
+						<RCVVisualization 
+							{rounds} 
+							{candidates} 
+							totalVotes={results.total_votes}
+						/>
 					{/if}
 				</div>
 			{:else}

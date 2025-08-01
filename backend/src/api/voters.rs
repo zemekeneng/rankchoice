@@ -301,6 +301,76 @@ pub async fn list_voters(
     Ok(Json(create_api_response(response)))
 }
 
+/// POST /api/polls/:id/registration - Create a registration link for a poll
+pub async fn create_registration_link(
+    Path(poll_id): Path<String>,
+    State(auth_service): State<AuthService>,
+    headers: HeaderMap,
+) -> Result<Json<ApiResponse<RegistrationLinkResponse>>, StatusCode> {
+    let pool = auth_service.pool();
+    
+    // Extract user ID from JWT token
+    let user_id = match get_current_user_id(&headers, &auth_service) {
+        Ok(user_id) => user_id,
+        Err((status, _)) => return Err(status),
+    };
+
+    // Parse poll ID
+    let poll_uuid = match Uuid::parse_str(&poll_id) {
+        Ok(uuid) => uuid,
+        Err(_) => {
+            return Ok(Json(create_error_response("INVALID_ID", "Invalid poll ID format")));
+        }
+    };
+
+    // Verify poll exists and user owns it
+    let poll = match Poll::find_by_id(pool, poll_uuid).await {
+        Ok(Some(poll)) => poll,
+        Ok(None) => {
+            return Ok(Json(create_error_response("NOT_FOUND", "Poll not found")));
+        }
+        Err(e) => {
+            tracing::error!("Database error finding poll: {}", e);
+            return Err(StatusCode::INTERNAL_SERVER_ERROR);
+        }
+    };
+
+    if poll.user_id != user_id {
+        return Ok(Json(create_error_response("FORBIDDEN", "You don't have permission to manage this poll")));
+    }
+
+    // Generate a registration token
+    let registration_token = format!("reg_{}", Uuid::new_v4());
+    
+    // Store the registration link in database (you might want to add a registration_links table)
+    // For now, we'll return the link directly
+    let registration_url = format!("http://localhost:5173/register/{}", registration_token);
+
+    let response = RegistrationLinkResponse {
+        poll_id: poll.id.to_string(),
+        registration_token,
+        registration_url,
+        expires_at: None, // You might want to add expiration
+        created_at: chrono::Utc::now().to_rfc3339(),
+    };
+
+    Ok(Json(create_api_response(response)))
+}
+
+#[derive(Debug, Serialize)]
+pub struct RegistrationLinkResponse {
+    #[serde(rename = "pollId")]
+    pub poll_id: String,
+    #[serde(rename = "registrationToken")]
+    pub registration_token: String,
+    #[serde(rename = "registrationUrl")]
+    pub registration_url: String,
+    #[serde(rename = "expiresAt")]
+    pub expires_at: Option<String>,
+    #[serde(rename = "createdAt")]
+    pub created_at: String,
+}
+
 /// Helper function to get voters by poll ID
 async fn get_voters_by_poll_id(pool: &sqlx::PgPool, poll_id: Uuid) -> Result<Vec<Voter>, sqlx::Error> {
     let voter_rows = sqlx::query!(

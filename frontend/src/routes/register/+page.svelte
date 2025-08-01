@@ -77,12 +77,26 @@
 		return Object.values(errors).every(fieldErrors => fieldErrors.length === 0);
 	}
 
-	// Handle form submission
+	// Handle form submission with robust timing protection
 	async function handleSubmit(event: Event) {
-		event.preventDefault();
+		// Immediate and aggressive prevention of default form submission
+		try {
+			if (event) {
+				event.preventDefault();
+				event.stopPropagation();
+				event.stopImmediatePropagation();
+			}
+		} catch (e) {
+			console.warn('Event prevention error:', e);
+		}
+		
+		// Double-check we're not already submitting to prevent double submission
+		if (isSubmitting) {
+			return false;
+		}
 		
 		if (!validateForm()) {
-			return;
+			return false;
 		}
 
 		isSubmitting = true;
@@ -98,10 +112,21 @@
 			// Navigation is handled by the auth store
 		} catch (error) {
 			console.error('Registration error:', error);
-			// Error is handled by the auth store
+			// Error is handled by the auth store - just continue
+			// The error is displayed via authStore.error in the template
 		} finally {
 			isSubmitting = false;
 		}
+		
+		return false; // Ensure form doesn't submit
+	}
+
+	// Additional backup submit handler for submit button clicks
+	async function handleSubmitButton(event: Event) {
+		event.preventDefault();
+		event.stopPropagation();
+		await handleSubmit(event);
+		return false;
 	}
 
 	// Clear field error when user starts typing
@@ -138,7 +163,7 @@
 			</p>
 		</div>
 
-		<form class="mt-8 space-y-6" onsubmit={handleSubmit}>
+		<form class="mt-8 space-y-6" action="" method="post" onsubmit={handleSubmit}>
 			<div class="space-y-4">
 				<div>
 					<label for="name" class="block text-sm font-medium text-gray-700">
@@ -283,6 +308,7 @@
 					type="submit"
 					data-testid="register-submit-btn"
 					disabled={isSubmitting || authStore.isLoading}
+					onclick={handleSubmitButton}
 					class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
 				>
 					{#if isSubmitting || authStore.isLoading}

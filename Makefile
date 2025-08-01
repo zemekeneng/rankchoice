@@ -200,10 +200,20 @@ test-frontend: ## Run frontend tests
 	@echo "💻 Running frontend unit tests..."
 	@cd frontend && npm run test:unit -- --run
 
-test-e2e: ## Run E2E tests (requires dev environment)
-	@echo "🧪 Running E2E tests..."
+test-e2e: ## Run E2E tests with optimal parallelism (requires dev environment)
+	@echo "🧪 Running E2E tests with parallel workers..."
 	@echo "⚠️  Ensure dev environment is running (make dev-bg)"
 	@cd frontend && npm run test:e2e
+
+test-e2e-fast: ## Run E2E tests with maximum parallelism
+	@echo "🚀 Running E2E tests with maximum parallelism..."
+	@echo "⚠️  Ensure dev environment is running (make dev-bg)"
+	@cd frontend && npx playwright test --workers=4
+
+test-e2e-single: ## Run E2E tests sequentially (safer but slower)
+	@echo "🐌 Running E2E tests sequentially..."
+	@echo "⚠️  Ensure dev environment is running (make dev-bg)"
+	@cd frontend && npx playwright test --workers=1
 
 test-e2e-headed: ## Run E2E tests with browser UI
 	@echo "🧪 Running E2E tests (headed mode)..."

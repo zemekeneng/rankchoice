@@ -73,6 +73,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         // Voter management routes (protected)
         .route("/api/polls/:id/invite", post(api::voters::create_voter))
         .route("/api/polls/:id/voters", get(api::voters::list_voters))
+        .route("/api/polls/:id/registration", post(api::voters::create_registration_link))
         // Voting routes (public)
         .route("/api/vote/:token", get(api::voting::get_ballot))
         .route("/api/vote/:token", post(api::voting::submit_ballot))

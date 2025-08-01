@@ -60,6 +60,10 @@ pub async fn create_test_app(pool: PgPool) -> Router {
         .route("/api/polls/:id/candidates/order", put(rankchoice_api::api::candidates::reorder_candidates))
         .route("/api/candidates/:id", put(rankchoice_api::api::candidates::update_candidate))
         .route("/api/candidates/:id", delete(rankchoice_api::api::candidates::delete_candidate))
+        // Voter management routes
+        .route("/api/polls/:id/invite", post(rankchoice_api::api::voters::create_voter))
+        .route("/api/polls/:id/voters", get(rankchoice_api::api::voters::list_voters))
+        .route("/api/polls/:id/registration", post(rankchoice_api::api::voters::create_registration_link))
         // Voting routes (public)
         .route("/api/vote/:token", get(rankchoice_api::api::voting::get_ballot))
         .route("/api/vote/:token", post(rankchoice_api::api::voting::submit_ballot))
