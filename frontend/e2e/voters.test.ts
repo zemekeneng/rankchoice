@@ -18,46 +18,43 @@ test.describe('Voter Management and Statistics', () => {
     await page.goto('/register');
     
     // Wait for the page to load completely
-    await expect(page.locator('h1:has-text("Register")')).toBeVisible();
+    await expect(page.locator('[data-testid="register-heading"]')).toBeVisible();
     
-    // Fill registration form
-    await page.fill('input[type="email"]', testUser.email);
-    await page.fill('input[name="name"]', testUser.name);
-    await page.fill('input[name="password"]', testUser.password);
-    await page.fill('input[name="confirmPassword"]', testUser.password);
+    // Fill registration form using proper test IDs
+    await page.fill('[data-testid="register-email-input"]', testUser.email);
+    await page.fill('[data-testid="name-input"]', testUser.name);
+    await page.fill('[data-testid="register-password-input"]', testUser.password);
+    await page.fill('[data-testid="confirm-password-input"]', testUser.password);
     
     // Submit and wait for navigation
-    await page.click('button[type="submit"]');
+    await page.click('[data-testid="register-submit-btn"]');
     
     // Wait for successful registration and redirect to dashboard
     await expect(page).toHaveURL('/dashboard', { timeout: 10000 });
 
     // Create a test poll first
-    await page.click('button:has-text("Create Poll")');
+    await page.click('[data-testid="create-poll-btn"]');
     await expect(page).toHaveURL('/polls/new', { timeout: 10000 });
 
     // Fill poll basic information
     pollTitle = `Voter Test Poll ${timestamp}-${randomId}`;
-    await page.fill('input[id="title"]', pollTitle);
-    await page.fill('textarea[id="description"]', 'Test poll for voter management');
+    await page.fill('[data-testid="poll-title-input"]', pollTitle);
+    await page.fill('[data-testid="poll-description-input"]', 'Test poll for voter management');
 
-    // Wait for candidate inputs to be available
-    const candidateInputs = page.locator('input[placeholder="Candidate name"]');
-    await expect(candidateInputs.first()).toBeVisible();
-    
-    // Fill the default candidate fields  
-    await candidateInputs.nth(0).fill('Candidate Alpha');
-    await candidateInputs.nth(1).fill('Candidate Beta');
+    // Fill the default candidate fields using test IDs
+    await page.fill('[data-testid="candidate-name-0"]', 'Candidate Alpha');
+    await page.fill('[data-testid="candidate-name-1"]', 'Candidate Beta');
 
     // Create the poll and wait for creation
-    await page.click('button:has-text("Create Poll")');
+    await page.click('[data-testid="create-poll-submit-btn"]');
     
-    // Wait for redirect back to dashboard with created=true
-    await page.waitForURL(/\/dashboard/, { timeout: 15000 });
+    // Wait for redirect back to dashboard
+    await page.waitForURL('/dashboard', { timeout: 15000 });
     
     // Find the created poll and navigate to it
-    await expect(page.locator(`text=${pollTitle}`)).toBeVisible();
-    await page.click(`text=${pollTitle}`);
+    await page.waitForSelector('[data-testid^="poll-item-"]');
+    const pollElement = page.locator('[data-testid^="poll-item-"]').filter({ hasText: pollTitle });
+    await pollElement.click();
     
     // Now we should be on the poll management page
     await page.waitForURL(/\/polls\/[a-f0-9-]+$/, { timeout: 10000 });

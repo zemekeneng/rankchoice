@@ -1,0 +1,336 @@
+use axum::{
+    extract::{Path, State},
+    http::{HeaderMap, StatusCode},
+    Json,
+};
+use serde::{Deserialize, Serialize};
+use uuid::Uuid;
+
+use crate::models::ballot::Voter;
+use crate::models::poll::Poll;
+use crate::services::auth::AuthService;
+
+#[derive(Debug, Serialize)]
+pub struct ApiResponse<T> {
+    success: bool,
+    data: Option<T>,
+    error: Option<ApiError>,
+    metadata: ApiMetadata,
+}
+
+#[derive(Debug, Serialize)]
+struct ApiError {
+    code: String,
+    message: String,
+}
+
+#[derive(Debug, Serialize)]
+struct ApiMetadata {
+    timestamp: String,
+    version: String,
+}
+
+impl<T> ApiResponse<T> {
+    fn success(data: T) -> Self {
+        Self {
+            success: true,
+            data: Some(data),
+            error: None,
+            metadata: ApiMetadata {
+                timestamp: chrono::Utc::now().to_rfc3339(),
+                version: env!("CARGO_PKG_VERSION").to_string(),
+            },
+        }
+    }
+
+    fn error(code: &str, message: &str) -> ApiResponse<()> {
+        ApiResponse {
+            success: false,
+            data: None,
+            error: Some(ApiError {
+                code: code.to_string(),
+                message: message.to_string(),
+            }),
+            metadata: ApiMetadata {
+                timestamp: chrono::Utc::now().to_rfc3339(),
+                version: env!("CARGO_PKG_VERSION").to_string(),
+            },
+        }
+    }
+}
+
+fn get_current_user_id(headers: &HeaderMap, auth_service: &AuthService) -> Result<Uuid, (StatusCode, Json<ApiResponse<()>>)> {
+    let auth_header = headers.get("authorization").ok_or_else(|| {
+        (
+            StatusCode::UNAUTHORIZED,
+            Json(ApiResponse::<()>::error("UNAUTHORIZED", "Missing authorization header")),
+        )
+    })?;
+
+    let auth_str = auth_header.to_str().map_err(|_| {
+        (
+            StatusCode::UNAUTHORIZED,
+            Json(ApiResponse::<()>::error("UNAUTHORIZED", "Invalid authorization format")),
+        )
+    })?;
+
+    let token = auth_str.strip_prefix("Bearer ").ok_or_else(|| {
+        (
+            StatusCode::UNAUTHORIZED,
+            Json(ApiResponse::<()>::error("UNAUTHORIZED", "Invalid token")),
+        )
+    })?;
+
+    let claims = auth_service.verify_token(token).map_err(|_| {
+        (
+            StatusCode::UNAUTHORIZED,
+            Json(ApiResponse::<()>::error("UNAUTHORIZED", "Invalid token")),
+        )
+    })?;
+
+    let user_id = Uuid::parse_str(&claims.sub).map_err(|_| {
+        (
+            StatusCode::UNAUTHORIZED,
+            Json(ApiResponse::<()>::error("UNAUTHORIZED", "Invalid user ID in token")),
+        )
+    })?;
+
+    Ok(user_id)
+}
+
+fn create_api_response<T>(data: T) -> ApiResponse<T> {
+    ApiResponse::success(data)
+}
+
+fn create_error_response<T>(code: &str, message: &str) -> ApiResponse<T> {
+    ApiResponse {
+        success: false,
+        data: None,
+        error: Some(ApiError {
+            code: code.to_string(),
+            message: message.to_string(),
+        }),
+        metadata: ApiMetadata {
+            timestamp: chrono::Utc::now().to_rfc3339(),
+            version: env!("CARGO_PKG_VERSION").to_string(),
+        },
+    }
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateVoterRequest {
+    pub email: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct VoterResponse {
+    pub id: String,
+    #[serde(rename = "pollId")]
+    pub poll_id: String,
+    pub email: Option<String>,
+    #[serde(rename = "ballotToken")]
+    pub ballot_token: String,
+    #[serde(rename = "hasVoted")]
+    pub has_voted: bool,
+    #[serde(rename = "invitedAt")]
+    pub invited_at: String,
+    #[serde(rename = "votedAt")]
+    pub voted_at: Option<String>,
+    #[serde(rename = "votingUrl")]
+    pub voting_url: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct VotersListResponse {
+    pub voters: Vec<VoterResponse>,
+    pub total: usize,
+    #[serde(rename = "votedCount")]
+    pub voted_count: usize,
+    #[serde(rename = "pendingCount")]
+    pub pending_count: usize,
+}
+
+/// POST /api/polls/:id/invite - Create a voter for a poll
+pub async fn create_voter(
+    Path(poll_id): Path<String>,
+    State(auth_service): State<AuthService>,
+    headers: HeaderMap,
+    Json(req): Json<CreateVoterRequest>,
+) -> Result<Json<ApiResponse<VoterResponse>>, StatusCode> {
+    let pool = auth_service.pool();
+    
+    // Extract user ID from JWT token
+    let user_id = match get_current_user_id(&headers, &auth_service) {
+        Ok(user_id) => user_id,
+        Err((status, _)) => return Err(status),
+    };
+
+    // Parse poll ID
+    let poll_uuid = match Uuid::parse_str(&poll_id) {
+        Ok(uuid) => uuid,
+        Err(_) => {
+            return Ok(Json(create_error_response("INVALID_ID", "Invalid poll ID format")));
+        }
+    };
+
+    // Verify poll exists and user owns it
+    let poll = match Poll::find_by_id(pool, poll_uuid).await {
+        Ok(Some(poll)) => poll,
+        Ok(None) => {
+            return Ok(Json(create_error_response("NOT_FOUND", "Poll not found")));
+        }
+        Err(e) => {
+            tracing::error!("Database error finding poll: {}", e);
+            return Err(StatusCode::INTERNAL_SERVER_ERROR);
+        }
+    };
+
+    if poll.user_id != user_id {
+        return Ok(Json(create_error_response("FORBIDDEN", "You don't have permission to manage this poll")));
+    }
+
+    // Generate display name for anonymous voters
+    let display_email = if req.email.is_none() || req.email.as_ref().map_or(true, |e| e.trim().is_empty()) {
+        // Generate a unique anonymous voter code
+        let timestamp = chrono::Utc::now().timestamp();
+        let random_suffix = format!("{:04}", timestamp % 10000);
+        Some(format!("Anonymous-{}", random_suffix))
+    } else {
+        req.email
+    };
+
+    // Create voter
+    let voter = match Voter::create(pool, poll_uuid, display_email, None, None).await {
+        Ok(voter) => voter,
+        Err(e) => {
+            tracing::error!("Database error creating voter: {}", e);
+            return Err(StatusCode::INTERNAL_SERVER_ERROR);
+        }
+    };
+
+    let voting_url = format!("http://localhost:5173/vote/{}", voter.ballot_token);
+
+    let response = VoterResponse {
+        id: voter.id.to_string(),
+        poll_id: voter.poll_id.to_string(),
+        email: voter.email.clone(),
+                        ballot_token: voter.ballot_token.clone(),
+        has_voted: voter.has_voted(),
+        invited_at: voter.invited_at.to_rfc3339(),
+        voted_at: voter.voted_at.map(|dt| dt.to_rfc3339()),
+        voting_url,
+    };
+
+    Ok(Json(create_api_response(response)))
+}
+
+/// GET /api/polls/:id/voters - List voters for a poll
+pub async fn list_voters(
+    Path(poll_id): Path<String>,
+    State(auth_service): State<AuthService>,
+    headers: HeaderMap,
+) -> Result<Json<ApiResponse<VotersListResponse>>, StatusCode> {
+    let pool = auth_service.pool();
+    
+    // Extract user ID from JWT token
+    let user_id = match get_current_user_id(&headers, &auth_service) {
+        Ok(user_id) => user_id,
+        Err((status, _)) => return Err(status),
+    };
+
+    // Parse poll ID
+    let poll_uuid = match Uuid::parse_str(&poll_id) {
+        Ok(uuid) => uuid,
+        Err(_) => {
+            return Ok(Json(create_error_response("INVALID_ID", "Invalid poll ID format")));
+        }
+    };
+
+    // Verify poll exists and user owns it
+    let poll = match Poll::find_by_id(pool, poll_uuid).await {
+        Ok(Some(poll)) => poll,
+        Ok(None) => {
+            return Ok(Json(create_error_response("NOT_FOUND", "Poll not found")));
+        }
+        Err(e) => {
+            tracing::error!("Database error finding poll: {}", e);
+            return Err(StatusCode::INTERNAL_SERVER_ERROR);
+        }
+    };
+
+    if poll.user_id != user_id {
+        return Ok(Json(create_error_response("FORBIDDEN", "You don't have permission to view this poll's voters")));
+    }
+
+    // Get voters for poll
+    let voters = match get_voters_by_poll_id(pool, poll_uuid).await {
+        Ok(voters) => voters,
+        Err(e) => {
+            tracing::error!("Database error finding voters: {}", e);
+            return Err(StatusCode::INTERNAL_SERVER_ERROR);
+        }
+    };
+
+    let voter_responses: Vec<VoterResponse> = voters
+        .iter()
+        .map(|voter| {
+            let voting_url = format!("http://localhost:5173/vote/{}", voter.ballot_token);
+            VoterResponse {
+                id: voter.id.to_string(),
+                poll_id: voter.poll_id.to_string(),
+                email: voter.email.clone(),
+                ballot_token: voter.ballot_token.clone(),
+                has_voted: voter.has_voted(),
+                invited_at: voter.invited_at.to_rfc3339(),
+                voted_at: voter.voted_at.map(|dt| dt.to_rfc3339()),
+                voting_url,
+            }
+        })
+        .collect();
+
+    let voted_count = voters.iter().filter(|v| v.has_voted()).count();
+    let pending_count = voters.len() - voted_count;
+
+    let response = VotersListResponse {
+        voters: voter_responses,
+        total: voters.len(),
+        voted_count,
+        pending_count,
+    };
+
+    Ok(Json(create_api_response(response)))
+}
+
+/// Helper function to get voters by poll ID
+async fn get_voters_by_poll_id(pool: &sqlx::PgPool, poll_id: Uuid) -> Result<Vec<Voter>, sqlx::Error> {
+    let voter_rows = sqlx::query!(
+        r#"
+        SELECT id, poll_id, email, ballot_token, ip_address, user_agent,
+               location_data, demographics, invited_at, voted_at
+        FROM voters
+        WHERE poll_id = $1
+        ORDER BY invited_at DESC
+        "#,
+        poll_id
+    )
+    .fetch_all(pool)
+    .await?;
+
+    let voters = voter_rows
+        .into_iter()
+        .map(|row| Voter {
+            id: row.id,
+            poll_id: row.poll_id.expect("poll_id cannot be null"),
+            email: row.email,
+            ballot_token: row.ballot_token,
+            ip_address: row.ip_address,
+            user_agent: row.user_agent,
+            location_data: row.location_data,
+            demographics: row.demographics,
+            invited_at: row.invited_at.expect("invited_at cannot be null"),
+            voted_at: row.voted_at,
+        })
+        .collect();
+
+    Ok(voters)
+} 
