@@ -9,7 +9,10 @@ import type {
 	CreatePollForm,
 	Candidate,
 	PollResults,
-	RCVRound
+	RCVRound,
+	Voter,
+	CreateVoterRequest,
+	VotersListResponse
 } from '../types.js';
 
 const API_BASE_URL = 'http://localhost:8080/api';
@@ -348,6 +351,20 @@ class APIClient {
 			total_ballots: number;
 			exhausted_ballots: number;
 		}>(`/polls/${pollId}/results/rounds`);
+		return response.data!;
+	}
+
+	// Voter management endpoints
+	async createVoter(pollId: string, voterData: CreateVoterRequest): Promise<Voter> {
+		const response = await this.request<Voter>(`/polls/${pollId}/invite`, {
+			method: 'POST',
+			body: JSON.stringify(voterData)
+		});
+		return response.data!;
+	}
+
+	async getVoters(pollId: string): Promise<VotersListResponse> {
+		const response = await this.request<VotersListResponse>(`/polls/${pollId}/voters`);
 		return response.data!;
 	}
 }

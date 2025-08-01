@@ -55,8 +55,22 @@ export interface Voter {
 	id: string;
 	pollId: string;
 	email?: string;
+	ballotToken: string;
 	hasVoted: boolean;
+	invitedAt: string;
 	votedAt?: string;
+	votingUrl: string;
+}
+
+export interface CreateVoterRequest {
+	email?: string;
+}
+
+export interface VotersListResponse {
+	voters: Voter[];
+	total: number;
+	votedCount: number;
+	pendingCount: number;
 }
 
 // Results types

@@ -4,7 +4,7 @@
 	import { goto } from '$app/navigation';
 	import { authStore } from '$lib/stores/auth.svelte.js';
 	import { apiClient } from '$lib/api/client.js';
-	import type { Poll, Candidate, PollResults, RCVRound } from '$lib/types.js';
+	import type { Poll, Candidate, PollResults, RCVRound, Voter, VotersListResponse, CreateVoterRequest } from '$lib/types.js';
 
 	// Get poll ID from URL
 	let pollId = $derived($page.params.id);
@@ -14,9 +14,15 @@
 	let candidates = $state<Candidate[]>([]);
 	let results = $state<PollResults | null>(null);
 	let rounds = $state<RCVRound[]>([]);
+	let voters = $state<Voter[]>([]);
+	let voterStats = $state<{ total: number; votedCount: number; pendingCount: number }>({ total: 0, votedCount: 0, pendingCount: 0 });
 	let isLoading = $state(true);
 	let error = $state<string | null>(null);
 	let activeTab = $state<'overview' | 'voters' | 'results'>('overview');
+	let votersLoading = $state(false);
+	let voterFormData = $state<CreateVoterRequest>({ email: '' });
+	let addingVoter = $state(false);
+	let voterError = $state<string | null>(null);
 
 	// Redirect if not authenticated (wait for auth to load first)
 	$effect(() => {
@@ -40,6 +46,19 @@
 			// Load candidates
 			candidates = await apiClient.getCandidates(currentPollId);
 
+			// Always load voter stats for the overview
+			try {
+				const votersData = await apiClient.getVoters(currentPollId);
+				voterStats = {
+					total: votersData.total,
+					votedCount: votersData.votedCount,
+					pendingCount: votersData.pendingCount
+				};
+			} catch (voterError) {
+				// If voters endpoint fails, set empty stats
+				voterStats = { total: 0, votedCount: 0, pendingCount: 0 };
+			}
+
 			// Try to load results (may fail if no votes yet)
 			try {
 				results = await apiClient.getPollResults(currentPollId);
@@ -49,6 +68,11 @@
 				// Results not available yet - this is okay
 				results = null;
 				rounds = [];
+			}
+
+			// Load voters if on voters tab
+			if (activeTab === 'voters') {
+				await loadVoters();
 			}
 		} catch (err: any) {
 			console.error('Error loading poll:', err);
@@ -61,6 +85,75 @@
 			}
 		} finally {
 			isLoading = false;
+		}
+	}
+
+	// Load voters
+	async function loadVoters() {
+		if (!pollId || !authStore.isAuthenticated) return;
+
+		try {
+			votersLoading = true;
+			voterError = null;
+			const votersData = await apiClient.getVoters(pollId);
+			voters = votersData.voters;
+			voterStats = {
+				total: votersData.total,
+				votedCount: votersData.votedCount,
+				pendingCount: votersData.pendingCount
+			};
+		} catch (e: any) {
+			voterError = e.message || 'Failed to load voters';
+		} finally {
+			votersLoading = false;
+		}
+	}
+
+	// Add voter
+	async function addVoter() {
+		if (!pollId || addingVoter) return;
+
+		try {
+			addingVoter = true;
+			voterError = null;
+
+			await apiClient.createVoter(pollId, voterFormData);
+			
+			// Clear form
+			voterFormData = { email: '' };
+			
+			// Reload voters and poll data to update all stats
+			await Promise.all([
+				loadVoters(),
+				loadPoll() // This will refresh the main poll stats
+			]);
+		} catch (e: any) {
+			voterError = e.message || 'Failed to add voter';
+		} finally {
+			addingVoter = false;
+		}
+	}
+
+	// Handle tab change
+	async function handleTabChange(tab: 'overview' | 'voters' | 'results') {
+		activeTab = tab;
+		if (tab === 'voters' && voters.length === 0) {
+			await loadVoters();
+		}
+	}
+
+	// Copy to clipboard
+	async function copyToClipboard(text: string) {
+		try {
+			await navigator.clipboard.writeText(text);
+		} catch (e) {
+			// Fallback for older browsers
+			const textArea = document.createElement('textarea');
+			textArea.value = text;
+			document.body.appendChild(textArea);
+			textArea.select();
+			document.execCommand('copy');
+			document.body.removeChild(textArea);
 		}
 	}
 
@@ -198,7 +291,7 @@
 						<div class="flex items-center">
 							<div class="flex-shrink-0">
 								<svg class="h-6 w-6 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 715.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
 								</svg>
 							</div>
 							<div class="ml-5 w-0 flex-1">
@@ -208,6 +301,31 @@
 									</dt>
 									<dd class="text-lg font-medium text-gray-900">
 										{candidates.length}
+									</dd>
+								</dl>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<div class="bg-white overflow-hidden shadow rounded-lg" data-testid="voters-stats-card">
+					<div class="p-5">
+						<div class="flex items-center">
+							<div class="flex-shrink-0">
+								<svg class="h-6 w-6 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+								</svg>
+							</div>
+							<div class="ml-5 w-0 flex-1">
+								<dl>
+									<dt class="text-sm font-medium text-gray-500 truncate">
+										Voters
+									</dt>
+									<dd class="text-lg font-medium text-gray-900" data-testid="voters-total-count">
+										{voterStats.total}
+										{#if voterStats.total > 0}
+											<span class="text-sm text-gray-500" data-testid="voters-voted-count">({voterStats.votedCount || 0} voted)</span>
+										{/if}
 									</dd>
 								</dl>
 							</div>
@@ -229,7 +347,7 @@
 										Total Votes
 									</dt>
 									<dd class="text-lg font-medium text-gray-900">
-										{results?.totalVotes || 0}
+										{results?.totalVotes || voterStats.votedCount}
 									</dd>
 								</dl>
 							</div>
@@ -287,7 +405,8 @@
 		<div class="border-b border-gray-200 mb-6">
 			<nav class="-mb-px flex space-x-8">
 				<button
-					onclick={() => activeTab = 'overview'}
+					data-testid="overview-tab"
+					onclick={() => handleTabChange('overview')}
 					class="py-2 px-1 border-b-2 font-medium text-sm"
 					class:border-indigo-500={activeTab === 'overview'}
 					class:text-indigo-600={activeTab === 'overview'}
@@ -298,7 +417,8 @@
 					Overview
 				</button>
 				<button
-					onclick={() => activeTab = 'voters'}
+					data-testid="voters-tab"
+					onclick={() => handleTabChange('voters')}
 					class="py-2 px-1 border-b-2 font-medium text-sm"
 					class:border-indigo-500={activeTab === 'voters'}
 					class:text-indigo-600={activeTab === 'voters'}
@@ -306,10 +426,16 @@
 					class:text-gray-500={activeTab !== 'voters'}
 					class:hover:text-gray-700={activeTab !== 'voters'}
 				>
-					Voter Management
+					Voters
+					{#if voterStats.total > 0}
+						<span class="ml-2 bg-gray-100 text-gray-900 hidden sm:inline-block py-0.5 px-2.5 rounded-full text-xs font-medium" data-testid="voters-tab-badge">
+							{voterStats.total}
+						</span>
+					{/if}
 				</button>
 				<button
-					onclick={() => activeTab = 'results'}
+					data-testid="results-tab"
+					onclick={() => handleTabChange('results')}
 					class="py-2 px-1 border-b-2 font-medium text-sm"
 					class:border-indigo-500={activeTab === 'results'}
 					class:text-indigo-600={activeTab === 'results'}
@@ -411,21 +537,177 @@
 				</ul>
 			</div>
 		{:else if activeTab === 'voters'}
-			<!-- Voter Management Placeholder -->
-			<div class="bg-gray-50 rounded-lg p-8 text-center">
-				<svg class="mx-auto h-12 w-12 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-				</svg>
-				<h3 class="mt-4 text-lg font-medium text-gray-900">Voter Management</h3>
-				<p class="mt-2 text-sm text-gray-500 max-w-sm mx-auto">
-					Invite voters, manage ballot links, and track voting progress. This feature will be implemented in the next phase.
-				</p>
-				<button
-					onclick={copyVotingLink}
-					class="mt-6 inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
-				>
-					Get Started with Voter Invites
-				</button>
+			<!-- Voter Management -->
+			<div class="space-y-6">
+				<!-- Voter Stats -->
+				<div class="bg-white shadow rounded-lg">
+					<div class="px-6 py-4 border-b border-gray-200">
+						<h3 class="text-lg font-medium text-gray-900">Voter Overview</h3>
+					</div>
+					<div class="px-6 py-4">
+						<dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-3">
+							<div>
+								<dt class="text-sm font-medium text-gray-500">Total Voters</dt>
+								<dd class="mt-1 text-3xl font-semibold text-gray-900" data-testid="voters-total-stat">{voterStats.total || 0}</dd>
+							</div>
+							<div>
+								<dt class="text-sm font-medium text-gray-500">Voted</dt>
+								<dd class="mt-1 text-3xl font-semibold text-green-600" data-testid="voters-voted-stat">{voterStats.votedCount || 0}</dd>
+							</div>
+							<div>
+								<dt class="text-sm font-medium text-gray-500">Pending</dt>
+								<dd class="mt-1 text-3xl font-semibold text-yellow-600" data-testid="voters-pending-stat">{voterStats.pendingCount || 0}</dd>
+							</div>
+						</dl>
+					</div>
+				</div>
+
+				<!-- Add Voter Form -->
+				<div class="bg-white shadow rounded-lg">
+					<div class="px-6 py-4 border-b border-gray-200">
+						<h3 class="text-lg font-medium text-gray-900">Invite Voter</h3>
+						<p class="mt-1 text-sm text-gray-500">Generate a unique voting link for a voter</p>
+					</div>
+					<form onsubmit={e => { e.preventDefault(); addVoter(); }} class="px-6 py-4">
+						{#if voterError}
+							<div class="mb-4 bg-red-50 border border-red-200 rounded-md p-3">
+								<p class="text-sm text-red-600">{voterError}</p>
+							</div>
+						{/if}
+						
+						<div class="flex gap-4">
+							<div class="flex-1">
+								<label for="voter-email" class="block text-sm font-medium text-gray-700">
+									Email (optional)
+								</label>
+								<input
+									id="voter-email"
+									data-testid="voter-email-input"
+									type="email"
+									bind:value={voterFormData.email}
+									placeholder="voter@example.com"
+									class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+									disabled={addingVoter}
+								/>
+								<p class="mt-1 text-xs text-gray-500">
+									Leave empty to generate an anonymous voting link
+								</p>
+							</div>
+							<div class="flex items-end">
+								<button
+									type="submit"
+									data-testid="add-voter-btn"
+									disabled={addingVoter}
+									class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-gray-300 disabled:cursor-not-allowed"
+								>
+									{#if addingVoter}
+										<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+											<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+											<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+										</svg>
+										Adding...
+									{:else}
+										<svg class="h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+										</svg>
+										Add Voter
+									{/if}
+								</button>
+							</div>
+						</div>
+					</form>
+				</div>
+
+				<!-- Voters List -->
+				<div class="bg-white shadow rounded-lg">
+					<div class="px-6 py-4 border-b border-gray-200">
+						<h3 class="text-lg font-medium text-gray-900">Voters ({voters.length})</h3>
+					</div>
+					
+					{#if votersLoading}
+						<div class="px-6 py-8 text-center">
+							<div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
+							<p class="mt-2 text-sm text-gray-500">Loading voters...</p>
+						</div>
+					{:else if voters.length === 0}
+						<div class="px-6 py-8 text-center">
+							<svg class="mx-auto h-12 w-12 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+							</svg>
+							<h4 class="mt-4 text-lg font-medium text-gray-900">No voters yet</h4>
+							<p class="mt-2 text-sm text-gray-500">Add voters to start collecting votes for this poll.</p>
+						</div>
+					{:else}
+						<ul class="divide-y divide-gray-200">
+							{#each voters as voter}
+								<li class="px-6 py-4">
+									<div class="flex items-center justify-between">
+										<div class="flex items-center">
+											<div class="flex-shrink-0">
+												{#if voter.hasVoted}
+													<div class="h-8 w-8 bg-green-100 rounded-full flex items-center justify-center">
+														<svg class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+															<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+														</svg>
+													</div>
+												{:else}
+													<div class="h-8 w-8 bg-yellow-100 rounded-full flex items-center justify-center">
+														<svg class="h-5 w-5 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+															<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+														</svg>
+													</div>
+												{/if}
+											</div>
+											<div class="ml-4">
+												<div class="flex items-center">
+													<p class="text-sm font-medium text-gray-900">
+														{voter.email || `Voter ${voter.ballotToken.slice(-6)}`}
+													</p>
+													<span class={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+														voter.hasVoted 
+															? 'bg-green-100 text-green-800' 
+															: 'bg-yellow-100 text-yellow-800'
+													}`}>
+														{voter.hasVoted ? 'Voted' : 'Pending'}
+													</span>
+												</div>
+												<p class="text-sm text-gray-500">
+													{#if voter.hasVoted && voter.votedAt}
+														Voted {formatDate(voter.votedAt)}
+													{:else}
+														Invited {formatDate(voter.invitedAt)}
+													{/if}
+												</p>
+											</div>
+										</div>
+										<div class="flex items-center space-x-2">
+											<button
+												onclick={() => copyToClipboard(voter.votingUrl)}
+												class="inline-flex items-center px-3 py-1 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+											>
+												<svg class="h-4 w-4 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+													<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+												</svg>
+												Copy Link
+											</button>
+											<a
+												href={voter.votingUrl}
+												target="_blank"
+												rel="noopener noreferrer"
+												class="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+											>
+												<svg class="h-4 w-4 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+													<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+												</svg>
+												Open
+											</a>
+										</div>
+									</div>
+								</li>
+							{/each}
+						</ul>
+					{/if}
+				</div>
 			</div>
 		{:else if activeTab === 'results'}
 			<!-- Results -->
