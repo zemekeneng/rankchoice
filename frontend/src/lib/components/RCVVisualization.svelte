@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { RCVRound, Candidate } from '$lib/types.js';
+	import { flip } from 'svelte/animate';
 
 	interface Props {
 		rounds: RCVRound[];
@@ -12,12 +13,37 @@
 	// State management
 	let currentRound = $state(0);
 	let isPlaying = $state(false);
-	let playbackSpeed = $state(1000); // ms between rounds
+	let playbackSpeed = $state(1300); // ms between rounds (optimized for FLIP animation)
+	let allowSorting = $state(true); // Controls when sorting should happen
+	let frozenOrder = $state<Candidate[]>([]); // Preserves order during Stage 1
 
 	// Derived state
 	let maxRound = $derived(rounds.length - 1);
 	let currentRoundData = $derived(rounds[currentRound] || null);
 	let majorityThreshold = $derived(Math.floor(totalVotes / 2) + 1);
+	
+	// Sorted candidates by vote count (non-mutating) - uses peak votes for eliminated candidates
+	// Only sorts when allowSorting is true, otherwise preserves frozen order
+	let sortedCandidates = $derived.by(() => {
+		if (allowSorting) {
+			return [...candidates].sort((a, b) => {
+				const aVotes = getSortingVoteCount(a.id);
+				const bVotes = getSortingVoteCount(b.id);
+				return bVotes - aVotes;
+			});
+		} else {
+			// Use frozen order to prevent jumping during Stage 1
+			const order = frozenOrder.length > 0 ? frozenOrder : [...candidates];
+			return [...order];
+		}
+	});
+
+	// Update frozen order when sorting is enabled (separate from derived)
+	$effect(() => {
+		if (allowSorting && sortedCandidates.length > 0) {
+			frozenOrder = [...sortedCandidates];
+		}
+	});
 
 	// Color palette for candidates
 	let candidateColors = $derived.by(() => {
@@ -58,21 +84,33 @@
 
 	// Check if candidate is eliminated in current round
 	function isEliminated(candidateId: string): boolean {
-		if (!currentRoundData) return false;
-		return currentRoundData.eliminated === candidateId;
+		if (!currentRoundData || !currentRoundData.eliminated) return false;
+		const eliminatedId = typeof currentRoundData.eliminated === 'string' 
+			? currentRoundData.eliminated 
+			: currentRoundData.eliminated.candidate_id;
+		return eliminatedId === candidateId;
 	}
 
 	// Check if candidate won in current round
 	function isWinner(candidateId: string): boolean {
-		if (!currentRoundData) return false;
-		return currentRoundData.winner === candidateId;
+		if (!currentRoundData || !currentRoundData.winner) return false;
+		const winnerId = typeof currentRoundData.winner === 'string' 
+			? currentRoundData.winner 
+			: currentRoundData.winner.candidate_id;
+		return winnerId === candidateId;
 	}
 
 	// Check if candidate is still active (not eliminated in previous rounds)
 	function isActive(candidateId: string): boolean {
 		for (let i = 0; i < currentRound; i++) {
-			if (rounds[i].eliminated === candidateId) {
-				return false;
+			if (rounds[i] && rounds[i].eliminated) {
+				const eliminated = rounds[i].eliminated!;
+				const eliminatedId = typeof eliminated === 'string' 
+					? eliminated 
+					: eliminated.candidate_id;
+				if (eliminatedId === candidateId) {
+					return false;
+				}
 			}
 		}
 		return true;
@@ -130,6 +168,84 @@
 		return totalVotes > 0 ? (transferredVotes / totalVotes) * 100 : 0;
 	}
 
+	// Get vote distribution for eliminated candidates (where their votes went)
+	function getVoteDistribution(eliminatedCandidateId: string): Record<string, number> {
+		const distribution: Record<string, number> = {};
+		
+		if (currentRound === 0) return distribution;
+		
+		// Find the round where this candidate was eliminated
+		let eliminationRound = -1;
+		for (let i = 0; i <= currentRound; i++) { // Changed < to <= to include current round
+			if (rounds[i] && rounds[i].eliminated) {
+				const eliminated = rounds[i].eliminated!;
+				const eliminatedId = typeof eliminated === 'string' 
+					? eliminated 
+					: eliminated.candidate_id;
+				if (eliminatedId === eliminatedCandidateId) {
+					eliminationRound = i;
+					break;
+				}
+			}
+		}
+		
+		if (eliminationRound === -1) return distribution;
+		
+		// Calculate how votes were distributed in the next round
+		const beforeElimination = rounds[eliminationRound];
+		const afterElimination = rounds[eliminationRound + 1];
+		
+		if (!beforeElimination || !afterElimination) return distribution;
+		
+		// Calculate the increase for each remaining candidate
+		candidates.forEach(candidate => {
+			if (candidate.id === eliminatedCandidateId) return;
+			
+			const beforeVotes = beforeElimination.vote_counts[candidate.id]?.votes || 0;
+			const afterVotes = afterElimination.vote_counts[candidate.id]?.votes || 0;
+			const increase = afterVotes - beforeVotes;
+			
+			if (increase > 0) {
+				distribution[candidate.id] = increase;
+			}
+		});
+		return distribution;
+	}
+
+	// Get the vote count for sorting (current votes or votes when eliminated)
+	function getSortingVoteCount(candidateId: string): number {
+		// First check if candidate is eliminated in the current round
+		if (currentRoundData && currentRoundData.eliminated) {
+			const eliminated = currentRoundData.eliminated!;
+			const eliminatedId = typeof eliminated === 'string' 
+				? eliminated 
+				: eliminated.candidate_id;
+			if (eliminatedId === candidateId) {
+				// For currently eliminated candidate, use their vote count from this round
+				const voteData = currentRoundData.vote_counts[candidateId];
+				return voteData ? voteData.votes : 0;
+			}
+		}
+		
+		// Check if candidate was eliminated in a previous round
+		for (let i = 0; i < currentRound; i++) {
+			if (rounds[i] && rounds[i].eliminated) {
+				const eliminated = rounds[i].eliminated!;
+				const eliminatedId = typeof eliminated === 'string' 
+					? eliminated 
+					: eliminated.candidate_id;
+				if (eliminatedId === candidateId) {
+					// Return the vote count from the round they were eliminated
+					const voteData = rounds[i].vote_counts[candidateId];
+					return voteData ? voteData.votes : 0;
+				}
+			}
+		}
+		
+		// If candidate is still active, use current vote count
+		return getVoteCount(candidateId);
+	}
+
 	// Create darker shade of color for transferred votes
 	function getDarkerColor(color: string, factor: number = 0.6): string {
 		// Handle hex colors
@@ -150,21 +266,40 @@
 		return color;
 	}
 
+	// Two-stage animation: first update votes, then update order
+	async function animateRoundChange(newRound: number) {
+		// Only animate if we're actually changing rounds
+		if (newRound === currentRound) return;
+		
+		// Stage 1: Disable sorting, update round (shows vote redistribution)
+		allowSorting = false;
+		currentRound = newRound;
+		
+		// Wait for vote redistribution to be visible
+		await new Promise(resolve => setTimeout(resolve, 500));
+		
+		// Stage 2: Enable sorting (animates reordering)
+		allowSorting = true;
+	}
+
 	// Navigation functions
-	function nextRound() {
+	async function nextRound() {
 		if (currentRound < maxRound) {
-			currentRound++;
+			await animateRoundChange(currentRound + 1);
 		}
 	}
 
-	function prevRound() {
+	async function prevRound() {
 		if (currentRound > 0) {
-			currentRound--;
+			await animateRoundChange(currentRound - 1);
 		}
 	}
 
-	function goToRound(round: number) {
-		currentRound = Math.max(0, Math.min(round, maxRound));
+	async function goToRound(round: number) {
+		const newRound = Math.max(0, Math.min(round, maxRound));
+		if (newRound !== currentRound) {
+			await animateRoundChange(newRound);
+		}
 	}
 
 	// Auto-play functionality
@@ -174,9 +309,9 @@
 		isPlaying = !isPlaying;
 		
 		if (isPlaying) {
-			playInterval = setInterval(() => {
+			playInterval = setInterval(async () => {
 				if (currentRound < maxRound) {
-					nextRound();
+					await nextRound();
 				} else {
 					isPlaying = false;
 					if (playInterval) clearInterval(playInterval);
@@ -190,14 +325,23 @@
 		}
 	}
 
-	function reset() {
+	async function reset() {
 		isPlaying = false;
 		if (playInterval) {
 			clearInterval(playInterval);
 			playInterval = null;
 		}
-		currentRound = 0;
+		await animateRoundChange(0);
 	}
+
+	// Initialize sorting on component mount
+	$effect(() => {
+		// Ensure sorting is enabled on initial load and initialize frozen order
+		allowSorting = true;
+		if (frozenOrder.length === 0) {
+			frozenOrder = [...candidates];
+		}
+	});
 
 	// Cleanup on component destroy
 	$effect(() => {
@@ -219,9 +363,13 @@
 				<p class="text-sm text-gray-500">
 					Round {currentRound + 1} of {rounds.length} 
 					{#if currentRoundData?.eliminated}
-						• {candidates.find(c => c.id === currentRoundData?.eliminated)?.name} eliminated
+						• {typeof currentRoundData.eliminated === 'string' 
+							? candidates.find(c => c.id === currentRoundData.eliminated)?.name 
+							: currentRoundData.eliminated.name} eliminated
 					{:else if currentRoundData?.winner}
-						• {candidates.find(c => c.id === currentRoundData?.winner)?.name} wins!
+						• {typeof currentRoundData.winner === 'string' 
+							? candidates.find(c => c.id === currentRoundData.winner)?.name 
+							: currentRoundData.winner.name} wins!
 					{/if}
 				</p>
 			</div>
@@ -306,15 +454,15 @@
 			<!-- 50% majority line spanning all candidates -->
 			<div 
 				class="absolute top-0 bottom-0 w-0.5 bg-yellow-500 z-40 pointer-events-none"
-				style="left: calc(50% + 1.5rem)"
+				style="left: 50%"
 			>
 				<div class="absolute -top-2 -left-12 text-xs text-yellow-600 font-medium whitespace-nowrap">
 					Over 50% to win
 				</div>
 			</div>
 			
-			<div class="space-y-4">
-			{#each candidates as candidate}
+			<div class="candidate-container">
+			{#each sortedCandidates as candidate (candidate.id)}
 				{@const votes = getVoteCount(candidate.id)}
 				{@const percentage = getVotePercentage(candidate.id)}
 				{@const active = isActive(candidate.id)}
@@ -327,18 +475,19 @@
 				{@const transferredPercentage = getTransferredVotePercentage(candidate.id)}
 				{@const darkerColor = getDarkerColor(color)}
 				{@const shouldStripe = currentRound > 0 && votes === 0}
+				{@const previouslyEliminated = shouldStripe && !eliminated}
 				
 				<div 
-					class="relative p-4 rounded-lg border-2 transition-all duration-500"
+					class="relative p-4 rounded-lg border-2 candidate-card mb-4"
 					class:bg-green-50={winner}
 					class:border-green-300={winner}
-					class:bg-red-50={eliminated}
-					class:border-red-300={eliminated}
-					class:bg-gray-50={shouldStripe && !eliminated}
-					class:border-gray-300={shouldStripe && !eliminated}
-					class:bg-white={!shouldStripe && !winner}
-					class:border-gray-200={!shouldStripe && !winner}
-					class:opacity-60={!active}
+					class:border-red-300={previouslyEliminated}
+					class:bg-gray-50={previouslyEliminated}
+					class:border-gray-300={previouslyEliminated}
+					class:bg-white={!previouslyEliminated && !winner}
+					class:border-gray-200={!previouslyEliminated && !winner}
+					class:opacity-60={!active && !eliminated}
+					animate:flip={{duration: 600}}
 				>
 					<!-- Candidate header -->
 					<div class="flex items-center justify-between mb-3">
@@ -349,12 +498,10 @@
 							></div>
 							<div>
 								<h4 class="font-medium text-gray-900">{candidate.name}</h4>
-								{#if eliminated}
+								{#if previouslyEliminated}
 									<span class="text-xs text-red-600 font-medium">Eliminated</span>
 								{:else if winner}
 									<span class="text-xs text-green-600 font-medium">🏆 Winner!</span>
-								{:else if shouldStripe}
-									<span class="text-xs text-gray-500">Previously eliminated</span>
 								{/if}
 							</div>
 						</div>
@@ -368,73 +515,56 @@
 					<!-- Vote progress bar -->
 					<div class="relative">
 						<div class="w-full bg-gray-200 h-6 overflow-hidden" style="border-radius: 0.375rem">
-							{#if !shouldStripe}
+							{#if !previouslyEliminated}
 								<!-- Base votes (from previous rounds) -->
 								{#if basePercentage > 0}
 									<div 
-										class="h-6 transition-all duration-700 ease-out absolute left-0 top-0 z-10 flex items-center justify-center"
+										class="h-6 transition-all duration-700 ease-out absolute left-0 top-0 z-10"
 										style="width: {basePercentage}%; background-color: {color}; border-radius: {transferredPercentage > 0 ? '0.375rem 0 0 0.375rem' : '0.375rem'}"
-									>
-										<!-- Round label for base votes -->
-										{#if currentRound === 0}
-											{#if basePercentage > 15}
-												<span class="text-xs font-medium text-white drop-shadow">Round 1</span>
-											{:else if basePercentage > 8}
-												<span class="text-xs font-medium text-white drop-shadow">1</span>
-											{/if}
-										{:else if currentRound > 0 && basePercentage > 15}
-											<span class="text-xs font-medium text-white drop-shadow">Round 1</span>
-										{:else if currentRound > 0 && basePercentage > 8}
-											<span class="text-xs font-medium text-white drop-shadow">1</span>
-										{/if}
-									</div>
+									></div>
 								{/if}
 								
 								<!-- Transferred votes (darker shade) -->
 								{#if transferredPercentage > 0}
 									<div 
-										class="h-6 transition-all duration-700 ease-out absolute top-0 z-20 flex items-center justify-center"
+										class="h-6 transition-all duration-700 ease-out absolute top-0 z-20"
 										style="left: {basePercentage}%; width: {transferredPercentage}%; background-color: {darkerColor}; border-radius: 0 0.375rem 0.375rem 0"
-									>
-										<!-- Round label for transferred votes -->
-										{#if transferredPercentage > 15}
-											<span class="text-xs font-medium text-white drop-shadow">Round {currentRound + 1}</span>
-										{:else if transferredPercentage > 8}
-											<span class="text-xs font-medium text-white drop-shadow">{currentRound + 1}</span>
-										{/if}
-									</div>
+									></div>
 								{/if}
 								
 								<!-- Remove majority threshold indicator -->
 							{:else}
-								<!-- Eliminated or inactive candidate - show original color with gray stripes -->
-								{@const showWidth = eliminated ? percentage : (currentRound === 0 ? percentage : getPreviousRoundVotes(candidate.id) / totalVotes * 100)}
-								<div 
-									class="h-6 transition-all duration-700 ease-out absolute left-0 top-0 z-10 flex items-center justify-center"
-									style="width: {showWidth}%; background-color: {color}; background-image: repeating-linear-gradient(45deg, rgba(107, 114, 128, 0.8) 0px, rgba(107, 114, 128, 0.8) 4px, transparent 4px, transparent 8px); border-radius: 0.375rem"
-								>
-									{#if showWidth > 15}
-										<span class="text-xs font-medium text-white drop-shadow">Round 1</span>
-									{:else if showWidth > 8}
-										<span class="text-xs font-medium text-white drop-shadow">1</span>
-									{/if}
-								</div>
+								<!-- Previously eliminated candidate - show only distribution bar -->
+								{@const showWidth = previouslyEliminated ? (currentRound === 0 ? percentage : getPreviousRoundVotes(candidate.id) / totalVotes * 100) : percentage}
+								{@const distribution = getVoteDistribution(candidate.id)}
+								
+								{#if Object.keys(distribution).length > 0}
+									<!-- Full-thickness distribution bar showing where votes went -->
+									{@const totalDistributed = Object.values(distribution).reduce((sum, votes) => sum + votes, 0)}
+									<div class="absolute top-0 left-0 h-6 z-20 flex" style="width: {showWidth}%; border-radius: 0.375rem; overflow: hidden">
+										{#each Object.entries(distribution) as [receivingCandidateId, votesReceived], index}
+											{@const distributionPercentage = (votesReceived / totalDistributed) * 100}
+											{@const receivingColor = candidateColors[receivingCandidateId]}
+											<div 
+												class="h-6 transition-all duration-700 ease-out first:rounded-l-md last:rounded-r-md"
+												style="width: {distributionPercentage}%; background-color: {receivingColor}"
+												title="{votesReceived} votes to {candidates.find(c => c.id === receivingCandidateId)?.name}"
+											></div>
+										{/each}
+									</div>
+								{:else}
+									<!-- If no distribution data, show the original colored bar -->
+									<div 
+										class="h-6 transition-all duration-700 ease-out absolute left-0 top-0 z-10"
+										style="width: {showWidth}%; background-color: {color}; border-radius: 0.375rem"
+									></div>
+								{/if}
 							{/if}
 						</div>
 
 					</div>
 
-					<!-- Vote transfer animation indicator -->
-					{#if eliminated && currentRound < maxRound}
-						<div class="absolute inset-0 pointer-events-none">
-							<div class="absolute inset-0 bg-red-200 opacity-50 animate-pulse rounded-lg"></div>
-							<div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-								<div class="text-red-600 font-medium text-sm animate-bounce">
-									Votes transferring...
-								</div>
-							</div>
-						</div>
-					{/if}
+
 				</div>
 			{/each}
 		</div>
@@ -448,8 +578,26 @@
 					<div>Exhausted ballots: {currentRoundData.exhausted_ballots}</div>
 					{#if currentRoundData.eliminated}
 						<div class="text-red-600">
-							{candidates.find(c => c.id === currentRoundData.eliminated)?.name} eliminated (lowest votes)
+							{typeof currentRoundData.eliminated === 'string' 
+								? candidates.find(c => c.id === currentRoundData.eliminated)?.name 
+								: currentRoundData.eliminated.name} eliminated (lowest votes)
 						</div>
+						{#if currentRoundData.tiebreak_reason}
+							<div class="text-orange-600 text-xs mt-1">
+								<span class="font-medium">Tiebreaker used:</span>
+								{#if currentRoundData.tiebreak_reason === 'FirstChoiceVotes'}
+									Fewest first-choice votes
+								{:else if currentRoundData.tiebreak_reason === 'PriorRoundPerformance'}
+									Prior round performance
+								{:else if currentRoundData.tiebreak_reason === 'MostVotesToDistribute'}
+									Most votes to redistribute
+								{:else if currentRoundData.tiebreak_reason === 'Random'}
+									Random selection
+								{:else}
+									{currentRoundData.tiebreak_reason}
+								{/if}
+							</div>
+						{/if}
 						{#if currentRound > 0}
 							<div class="text-sm text-indigo-600 mt-2">
 								<span class="font-medium">Vote transfers this round:</span>
@@ -464,7 +612,9 @@
 					{/if}
 					{#if currentRoundData.winner}
 						<div class="text-green-600 font-medium">
-							🏆 {candidates.find(c => c.id === currentRoundData.winner)?.name} wins with majority!
+							🏆 {typeof currentRoundData.winner === 'string' 
+								? candidates.find(c => c.id === currentRoundData.winner)?.name 
+								: currentRoundData.winner.name} wins with majority!
 						</div>
 					{/if}
 				</div>
@@ -472,3 +622,16 @@
 		{/if}
 	</div>
 </div>
+
+<style>
+	.candidate-container {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+	}
+	
+	.candidate-card {
+		/* Remove transform transitions - let FLIP handle the movement */
+		transition: background-color 0.3s ease, border-color 0.3s ease, opacity 0.3s ease;
+	}
+</style>

@@ -82,6 +82,7 @@ pub struct RoundInfo {
     pub exhausted_ballots: usize,
     pub total_votes: f64,
     pub majority_threshold: f64,
+    pub tiebreak_reason: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -487,6 +488,16 @@ pub async fn get_rcv_rounds(
             }
         });
 
+        // Convert tiebreak reason to string
+        let tiebreak_reason = round.tiebreak_reason.as_ref().map(|reason| {
+            match reason {
+                crate::services::rcv::TieBreakReason::FirstChoiceVotes => "FirstChoiceVotes".to_string(),
+                crate::services::rcv::TieBreakReason::PriorRoundPerformance => "PriorRoundPerformance".to_string(),
+                crate::services::rcv::TieBreakReason::MostVotesToDistribute => "MostVotesToDistribute".to_string(),
+                crate::services::rcv::TieBreakReason::Random => "Random".to_string(),
+            }
+        });
+
         RoundInfo {
             round_number: round.round_number,
             vote_counts,
@@ -495,6 +506,7 @@ pub async fn get_rcv_rounds(
             exhausted_ballots: round.exhausted_ballots,
             total_votes: round.total_votes,
             majority_threshold: round.majority_threshold,
+            tiebreak_reason,
         }
     }).collect();
 

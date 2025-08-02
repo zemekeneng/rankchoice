@@ -24,6 +24,7 @@ pub struct Round {
     pub exhausted_ballots: usize,
     pub total_votes: f64,
     pub majority_threshold: f64,
+    pub tiebreak_reason: Option<TieBreakReason>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -34,11 +35,20 @@ pub struct RcvResult {
     pub exhausted_ballots: usize,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum TieBreakMethod {
-    PreviousRounds,
-    Random(u64), // seed for deterministic randomness
-    BallotOrder,
+    FirstChoiceVotes,
+    PriorRoundPerformance,  
+    MostVotesToDistribute,
+    Random(u64),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub enum TieBreakReason {
+    FirstChoiceVotes,
+    PriorRoundPerformance,
+    MostVotesToDistribute,
+    Random,
 }
 
 pub struct SingleWinnerRCV {
@@ -52,7 +62,7 @@ impl SingleWinnerRCV {
         Self {
             candidates,
             ballots,
-            tie_break_method: TieBreakMethod::PreviousRounds,
+            tie_break_method: TieBreakMethod::Random(42), // Default random seed
         }
     }
 
@@ -123,7 +133,7 @@ impl SingleWinnerRCV {
                 .map(|(id, _)| *id);
 
             // Find candidate(s) with fewest votes for elimination
-            let candidate_to_eliminate = if winner.is_none() && vote_counts.len() > 1 {
+            let (candidate_to_eliminate, tiebreak_reason) = if winner.is_none() && vote_counts.len() > 1 {
                 let min_votes = vote_counts.values()
                     .min_by(|a, b| a.partial_cmp(b).unwrap())
                     .copied()
@@ -135,13 +145,14 @@ impl SingleWinnerRCV {
                     .collect();
 
                 if tied_candidates.len() == 1 {
-                    Some(tied_candidates[0])
+                    (Some(tied_candidates[0]), None)
                 } else {
-                    // Handle tie-breaking
-                    Some(self.break_tie(&tied_candidates, &rounds))
+                    // Handle tie-breaking with comprehensive strategy
+                    let (eliminated, reason) = self.break_tie_comprehensive(&tied_candidates, &rounds);
+                    (Some(eliminated), Some(reason))
                 }
             } else {
-                None
+                (None, None)
             };
 
             // Record round results
@@ -153,6 +164,7 @@ impl SingleWinnerRCV {
                 exhausted_ballots: exhausted_count,
                 total_votes,
                 majority_threshold,
+                tiebreak_reason,
             };
 
             rounds.push(round);
@@ -198,41 +210,130 @@ impl SingleWinnerRCV {
         })
     }
 
-    /// Break ties between candidates using the configured method
-    fn break_tie(&self, tied_candidates: &[Uuid], previous_rounds: &[Round]) -> Uuid {
-        match self.tie_break_method {
-            TieBreakMethod::PreviousRounds => {
-                // Look backwards through rounds for differentiation
-                for round in previous_rounds.iter().rev() {
-                    let mut candidate_votes: Vec<(Uuid, f64)> = tied_candidates.iter()
-                        .filter_map(|&id| {
-                            round.vote_counts.get(&id).map(|&votes| (id, votes))
-                        })
-                        .collect();
-                    
-                    candidate_votes.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
-                    
-                    if candidate_votes.len() > 1 && 
-                       candidate_votes[0].1 > candidate_votes[1].1 {
-                        return candidate_votes[0].0;
-                    }
+    /// Break ties between candidates using comprehensive strategy
+    fn break_tie_comprehensive(&self, tied_candidates: &[Uuid], previous_rounds: &[Round]) -> (Uuid, TieBreakReason) {
+        // Strategy 1: First choice votes
+        if let Some(winner) = self.try_first_choice_tiebreak(tied_candidates) {
+            return (winner, TieBreakReason::FirstChoiceVotes);
+        }
+
+        // Strategy 2: Prior round performance  
+        if let Some(winner) = self.try_prior_round_tiebreak(tied_candidates, previous_rounds) {
+            return (winner, TieBreakReason::PriorRoundPerformance);
+        }
+
+        // Strategy 3: Most votes to distribute
+        if let Some(winner) = self.try_most_votes_to_distribute(tied_candidates, previous_rounds) {
+            return (winner, TieBreakReason::MostVotesToDistribute);
+        }
+
+        // Strategy 4: Random selection
+        let winner = self.random_tiebreak(tied_candidates);
+        (winner, TieBreakReason::Random)
+    }
+
+    /// Strategy 1: Eliminate candidate with fewer first-choice votes
+    fn try_first_choice_tiebreak(&self, tied_candidates: &[Uuid]) -> Option<Uuid> {
+        let mut first_choice_counts: HashMap<Uuid, usize> = HashMap::new();
+        
+        // Count first-choice votes for tied candidates
+        for ballot in &self.ballots {
+            if let Some(&first_choice) = ballot.rankings.first() {
+                if tied_candidates.contains(&first_choice) {
+                    *first_choice_counts.entry(first_choice).or_insert(0) += 1;
                 }
-                
-                // Fall back to first candidate if no difference found
-                tied_candidates[0]
-            }
-            TieBreakMethod::Random(seed) => {
-                use rand::{Rng, SeedableRng};
-                use rand::rngs::StdRng;
-                
-                let mut rng = StdRng::seed_from_u64(seed);
-                tied_candidates[rng.gen_range(0..tied_candidates.len())]
-            }
-            TieBreakMethod::BallotOrder => {
-                // Return the first candidate (assumes candidates are in ballot order)
-                tied_candidates[0]
             }
         }
+
+        // Find minimum first-choice votes among tied candidates
+        let min_first_choice = tied_candidates.iter()
+            .map(|&id| first_choice_counts.get(&id).copied().unwrap_or(0))
+            .min()?;
+
+        // Return candidate with fewest first-choice votes if unique
+        let candidates_with_min: Vec<Uuid> = tied_candidates.iter()
+            .filter(|&&id| first_choice_counts.get(&id).copied().unwrap_or(0) == min_first_choice)
+            .copied()
+            .collect();
+
+        if candidates_with_min.len() == 1 {
+            Some(candidates_with_min[0])
+        } else {
+            None
+        }
+    }
+
+    /// Strategy 2: Prior round performance (look back for differentiation)
+    fn try_prior_round_tiebreak(&self, tied_candidates: &[Uuid], previous_rounds: &[Round]) -> Option<Uuid> {
+        // Look backwards through rounds for differentiation
+        for round in previous_rounds.iter().rev() {
+            let mut candidate_votes: Vec<(Uuid, f64)> = tied_candidates.iter()
+                .filter_map(|&id| {
+                    round.vote_counts.get(&id).map(|&votes| (id, votes))
+                })
+                .collect();
+            
+            if candidate_votes.is_empty() {
+                continue;
+            }
+
+            candidate_votes.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
+            
+            // Return candidate with lowest votes in this round if unique
+            if candidate_votes.len() > 1 && 
+               candidate_votes[0].1 < candidate_votes[1].1 {
+                return Some(candidate_votes[0].0);
+            }
+        }
+        None
+    }
+
+    /// Strategy 3: Eliminate candidate who would redistribute most votes
+    fn try_most_votes_to_distribute(&self, tied_candidates: &[Uuid], _previous_rounds: &[Round]) -> Option<Uuid> {
+        let mut redistribution_counts: HashMap<Uuid, usize> = HashMap::new();
+
+        // Count how many ballots each tied candidate would redistribute
+        for ballot in &self.ballots {
+            // Find which tied candidate this ballot would go to if eliminated
+            for (ranking_index, &candidate_id) in ballot.rankings.iter().enumerate() {
+                if tied_candidates.contains(&candidate_id) {
+                    // Count how many more preferences this ballot has after this candidate
+                    let remaining_preferences = ballot.rankings.len() - ranking_index - 1;
+                    *redistribution_counts.entry(candidate_id).or_insert(0) += remaining_preferences;
+                    break;
+                }
+            }
+        }
+
+        // Find candidate with most votes to redistribute
+        let max_redistribution = tied_candidates.iter()
+            .map(|&id| redistribution_counts.get(&id).copied().unwrap_or(0))
+            .max()?;
+
+        let candidates_with_max: Vec<Uuid> = tied_candidates.iter()
+            .filter(|&&id| redistribution_counts.get(&id).copied().unwrap_or(0) == max_redistribution)
+            .copied()
+            .collect();
+
+        if candidates_with_max.len() == 1 {
+            Some(candidates_with_max[0])
+        } else {
+            None
+        }
+    }
+
+    /// Strategy 4: Random selection
+    fn random_tiebreak(&self, tied_candidates: &[Uuid]) -> Uuid {
+        use rand::{Rng, SeedableRng};
+        use rand::rngs::StdRng;
+        
+        let seed = match &self.tie_break_method {
+            TieBreakMethod::Random(seed) => *seed,
+            _ => 42, // Default seed
+        };
+        
+        let mut rng = StdRng::seed_from_u64(seed);
+        tied_candidates[rng.gen_range(0..tied_candidates.len())]
     }
 }
 
@@ -303,6 +404,55 @@ mod tests {
         // Second round: Alice=3, Bob=2 (Charlie's vote transferred to Alice)
         assert_eq!(result.rounds[1].vote_counts[&alice_id], 3.0);
         assert_eq!(result.rounds[1].vote_counts[&bob_id], 2.0);
+    }
+
+    #[test]
+    fn test_comprehensive_tiebreaker() {
+        let candidates = create_test_candidates();
+        let alice_id = candidates[0].id;
+        let bob_id = candidates[1].id;
+        let charlie_id = candidates[2].id;
+
+        // Create a scenario where Alice and Bob are tied for last place in round 1
+        // Charlie: 3 first-choice, Alice: 1 first-choice, Bob: 2 first-choice
+        // But arrange votes so Alice and Bob both get 1 vote in round 1 (tied for last)
+        let ballots = vec![
+            Ballot { id: Uuid::new_v4(), voter_id: Uuid::new_v4(), rankings: vec![charlie_id, alice_id] },    // Charlie 1st
+            Ballot { id: Uuid::new_v4(), voter_id: Uuid::new_v4(), rankings: vec![charlie_id, bob_id] },      // Charlie 1st
+            Ballot { id: Uuid::new_v4(), voter_id: Uuid::new_v4(), rankings: vec![charlie_id, alice_id] },    // Charlie 1st
+            Ballot { id: Uuid::new_v4(), voter_id: Uuid::new_v4(), rankings: vec![alice_id, charlie_id] },    // Alice 1st (1 first-choice)
+            Ballot { id: Uuid::new_v4(), voter_id: Uuid::new_v4(), rankings: vec![bob_id, charlie_id] },      // Bob 1st  (1 first-choice)
+            Ballot { id: Uuid::new_v4(), voter_id: Uuid::new_v4(), rankings: vec![bob_id, alice_id] },        // Bob 1st  (2 first-choice total)
+        ];
+        // Result in round 1: Charlie=3, Alice=1, Bob=2 votes
+        // No tie, so Bob should be eliminated normally without tiebreaker
+        
+        // Let's create a real tie scenario instead
+        let ballots = vec![
+            Ballot { id: Uuid::new_v4(), voter_id: Uuid::new_v4(), rankings: vec![charlie_id, alice_id] },    // Charlie 1st
+            Ballot { id: Uuid::new_v4(), voter_id: Uuid::new_v4(), rankings: vec![charlie_id, bob_id] },      // Charlie 1st  
+            Ballot { id: Uuid::new_v4(), voter_id: Uuid::new_v4(), rankings: vec![alice_id, charlie_id] },    // Alice 1st (1 first-choice)
+            Ballot { id: Uuid::new_v4(), voter_id: Uuid::new_v4(), rankings: vec![bob_id, alice_id] },        // Bob 1st (1 first-choice, same as Alice)
+        ];
+        // Round 1 result: Charlie=2, Alice=1, Bob=1 (Alice and Bob tied for last)
+        // First-choice counts: Charlie=0, Alice=1, Bob=1 (Alice and Bob tied in first-choice too)
+        // Should go to strategy 2 (prior round performance) - but this is round 1, so no prior rounds
+        // Should go to strategy 3 (most votes to distribute) or 4 (random)
+
+        let rcv = SingleWinnerRCV::new(candidates, ballots);
+        let result = rcv.tabulate().unwrap();
+
+        // Test passes if any of the expected tiebreaker scenarios occur
+        assert!(result.rounds.len() >= 1);
+        
+        // Find a round with elimination that had a tiebreaker
+        let had_tiebreaker = result.rounds.iter().any(|round| {
+            round.eliminated.is_some() && round.tiebreak_reason.is_some()
+        });
+        
+        // Should have used a tiebreaker in at least one round
+        assert!(had_tiebreaker, "Expected at least one round to use a tiebreaker");
+        assert_eq!(result.winner, Some(charlie_id));
     }
 
     #[test]
@@ -377,7 +527,7 @@ mod tests {
         ];
 
         let rcv = SingleWinnerRCV::new(candidates, ballots)
-            .with_tie_break_method(TieBreakMethod::PreviousRounds);
+            .with_tie_break_method(TieBreakMethod::PriorRoundPerformance);
         let result = rcv.tabulate().unwrap();
 
         // Alice should win with majority after transfers

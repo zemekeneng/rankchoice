@@ -104,12 +104,25 @@ export interface VoteCounts {
 	percentage: number;
 }
 
+export interface EliminatedCandidate {
+	candidate_id: string;
+	name: string;
+	votes: number;
+}
+
+export interface WinnerCandidate {
+	candidate_id: string;
+	name: string;
+	votes: number;
+}
+
 export interface RCVRound {
 	roundNumber: number;
 	vote_counts: Record<string, VoteCounts>;
-	eliminated?: string;
-	winner?: string;
+	eliminated?: string | EliminatedCandidate;
+	winner?: string | WinnerCandidate;
 	exhausted_ballots: number;
+	tiebreak_reason?: string;
 }
 
 // API types
