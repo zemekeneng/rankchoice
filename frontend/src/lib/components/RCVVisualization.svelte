@@ -78,6 +78,78 @@
 		return true;
 	}
 
+	// Get votes from previous round for comparison
+	function getPreviousRoundVotes(candidateId: string): number {
+		if (currentRound === 0) return 0;
+		const prevRound = rounds[currentRound - 1];
+		if (!prevRound) return 0;
+		const voteData = prevRound.vote_counts[candidateId];
+		return voteData ? voteData.votes : 0;
+	}
+
+	// Calculate transferred votes (difference from previous round)
+	function getTransferredVotes(candidateId: string): number {
+		// In the first round, there are no transferred votes
+		if (currentRound === 0) {
+			return 0;
+		}
+		
+		// If candidate is not active, they can't receive transfers
+		if (!isActive(candidateId)) {
+			return 0;
+		}
+		
+		const currentVotes = getVoteCount(candidateId);
+		const previousVotes = getPreviousRoundVotes(candidateId);
+		return Math.max(0, currentVotes - previousVotes);
+	}
+
+	// Get base votes (votes from previous round, or 0 if eliminated)
+	function getBaseVotes(candidateId: string): number {
+		// If this candidate is currently eliminated, they have no base votes in this round
+		if (!isActive(candidateId)) return 0;
+		
+		// In the first round, all votes are base votes
+		if (currentRound === 0) {
+			return getVoteCount(candidateId);
+		}
+		
+		// Otherwise, their base votes are what they had in the previous round
+		return getPreviousRoundVotes(candidateId);
+	}
+
+	// Calculate percentage of base votes
+	function getBaseVotePercentage(candidateId: string): number {
+		const baseVotes = getBaseVotes(candidateId);
+		return totalVotes > 0 ? (baseVotes / totalVotes) * 100 : 0;
+	}
+
+	// Calculate percentage of transferred votes
+	function getTransferredVotePercentage(candidateId: string): number {
+		const transferredVotes = getTransferredVotes(candidateId);
+		return totalVotes > 0 ? (transferredVotes / totalVotes) * 100 : 0;
+	}
+
+	// Create darker shade of color for transferred votes
+	function getDarkerColor(color: string, factor: number = 0.6): string {
+		// Handle hex colors
+		if (color.startsWith('#')) {
+			const hex = color.replace('#', '');
+			const r = parseInt(hex.substr(0, 2), 16);
+			const g = parseInt(hex.substr(2, 2), 16);
+			const b = parseInt(hex.substr(4, 2), 16);
+			
+			const darkerR = Math.floor(r * factor);
+			const darkerG = Math.floor(g * factor);
+			const darkerB = Math.floor(b * factor);
+			
+			return `rgb(${darkerR}, ${darkerG}, ${darkerB})`;
+		}
+		
+		// Handle rgb colors or fallback
+		return color;
+	}
+
 	// Navigation functions
 	function nextRound() {
 		if (currentRound < maxRound) {
@@ -229,9 +301,19 @@
 		</div>
 	</div>
 
-	<!-- Candidate Vote Visualization -->
-	<div class="px-6 py-6">
-		<div class="space-y-4">
+			<!-- Candidate Vote Visualization -->
+		<div class="px-6 py-6 relative">
+			<!-- 50% majority line spanning all candidates -->
+			<div 
+				class="absolute top-0 bottom-0 w-0.5 bg-yellow-500 z-40 pointer-events-none"
+				style="left: calc(50% + 1.5rem)"
+			>
+				<div class="absolute -top-2 -left-12 text-xs text-yellow-600 font-medium whitespace-nowrap">
+					Over 50% to win
+				</div>
+			</div>
+			
+			<div class="space-y-4">
 			{#each candidates as candidate}
 				{@const votes = getVoteCount(candidate.id)}
 				{@const percentage = getVotePercentage(candidate.id)}
@@ -239,6 +321,12 @@
 				{@const eliminated = isEliminated(candidate.id)}
 				{@const winner = isWinner(candidate.id)}
 				{@const color = candidateColors[candidate.id]}
+				{@const baseVotes = getBaseVotes(candidate.id)}
+				{@const transferredVotes = getTransferredVotes(candidate.id)}
+				{@const basePercentage = getBaseVotePercentage(candidate.id)}
+				{@const transferredPercentage = getTransferredVotePercentage(candidate.id)}
+				{@const darkerColor = getDarkerColor(color)}
+				{@const shouldStripe = currentRound > 0 && votes === 0}
 				
 				<div 
 					class="relative p-4 rounded-lg border-2 transition-all duration-500"
@@ -246,10 +334,10 @@
 					class:border-green-300={winner}
 					class:bg-red-50={eliminated}
 					class:border-red-300={eliminated}
-					class:bg-gray-50={!active && !eliminated}
-					class:border-gray-300={!active && !eliminated}
-					class:bg-white={active && !winner && !eliminated}
-					class:border-gray-200={active && !winner && !eliminated}
+					class:bg-gray-50={shouldStripe && !eliminated}
+					class:border-gray-300={shouldStripe && !eliminated}
+					class:bg-white={!shouldStripe && !winner}
+					class:border-gray-200={!shouldStripe && !winner}
 					class:opacity-60={!active}
 				>
 					<!-- Candidate header -->
@@ -265,7 +353,7 @@
 									<span class="text-xs text-red-600 font-medium">Eliminated</span>
 								{:else if winner}
 									<span class="text-xs text-green-600 font-medium">🏆 Winner!</span>
-								{:else if !active}
+								{:else if shouldStripe}
 									<span class="text-xs text-gray-500">Previously eliminated</span>
 								{/if}
 							</div>
@@ -279,27 +367,61 @@
 
 					<!-- Vote progress bar -->
 					<div class="relative">
-						<div class="w-full bg-gray-200 rounded-full h-6 overflow-hidden">
-							<div 
-								class="h-6 rounded-full transition-all duration-700 ease-out relative"
-								style="width: {percentage}%; background-color: {color}"
-							>
-								<!-- Majority threshold indicator -->
-								{#if percentage >= (majorityThreshold / totalVotes) * 100}
-									<div class="absolute inset-0 bg-yellow-400 opacity-30 animate-pulse"></div>
+						<div class="w-full bg-gray-200 h-6 overflow-hidden" style="border-radius: 0.375rem">
+							{#if !shouldStripe}
+								<!-- Base votes (from previous rounds) -->
+								{#if basePercentage > 0}
+									<div 
+										class="h-6 transition-all duration-700 ease-out absolute left-0 top-0 z-10 flex items-center justify-center"
+										style="width: {basePercentage}%; background-color: {color}; border-radius: {transferredPercentage > 0 ? '0.375rem 0 0 0.375rem' : '0.375rem'}"
+									>
+										<!-- Round label for base votes -->
+										{#if currentRound === 0}
+											{#if basePercentage > 15}
+												<span class="text-xs font-medium text-white drop-shadow">Round 1</span>
+											{:else if basePercentage > 8}
+												<span class="text-xs font-medium text-white drop-shadow">1</span>
+											{/if}
+										{:else if currentRound > 0 && basePercentage > 15}
+											<span class="text-xs font-medium text-white drop-shadow">Round 1</span>
+										{:else if currentRound > 0 && basePercentage > 8}
+											<span class="text-xs font-medium text-white drop-shadow">1</span>
+										{/if}
+									</div>
 								{/if}
-							</div>
+								
+								<!-- Transferred votes (darker shade) -->
+								{#if transferredPercentage > 0}
+									<div 
+										class="h-6 transition-all duration-700 ease-out absolute top-0 z-20 flex items-center justify-center"
+										style="left: {basePercentage}%; width: {transferredPercentage}%; background-color: {darkerColor}; border-radius: 0 0.375rem 0.375rem 0"
+									>
+										<!-- Round label for transferred votes -->
+										{#if transferredPercentage > 15}
+											<span class="text-xs font-medium text-white drop-shadow">Round {currentRound + 1}</span>
+										{:else if transferredPercentage > 8}
+											<span class="text-xs font-medium text-white drop-shadow">{currentRound + 1}</span>
+										{/if}
+									</div>
+								{/if}
+								
+								<!-- Remove majority threshold indicator -->
+							{:else}
+								<!-- Eliminated or inactive candidate - show original color with gray stripes -->
+								{@const showWidth = eliminated ? percentage : (currentRound === 0 ? percentage : getPreviousRoundVotes(candidate.id) / totalVotes * 100)}
+								<div 
+									class="h-6 transition-all duration-700 ease-out absolute left-0 top-0 z-10 flex items-center justify-center"
+									style="width: {showWidth}%; background-color: {color}; background-image: repeating-linear-gradient(45deg, rgba(107, 114, 128, 0.8) 0px, rgba(107, 114, 128, 0.8) 4px, transparent 4px, transparent 8px); border-radius: 0.375rem"
+								>
+									{#if showWidth > 15}
+										<span class="text-xs font-medium text-white drop-shadow">Round 1</span>
+									{:else if showWidth > 8}
+										<span class="text-xs font-medium text-white drop-shadow">1</span>
+									{/if}
+								</div>
+							{/if}
 						</div>
-						
-						<!-- Majority threshold line -->
-						<div 
-							class="absolute top-0 h-6 w-0.5 bg-yellow-500"
-							style="left: {(majorityThreshold / totalVotes) * 100}%"
-						>
-							<div class="absolute -top-1 -left-6 text-xs text-yellow-600 font-medium">
-								Majority
-							</div>
-						</div>
+
 					</div>
 
 					<!-- Vote transfer animation indicator -->
@@ -328,6 +450,17 @@
 						<div class="text-red-600">
 							{candidates.find(c => c.id === currentRoundData.eliminated)?.name} eliminated (lowest votes)
 						</div>
+						{#if currentRound > 0}
+							<div class="text-sm text-indigo-600 mt-2">
+								<span class="font-medium">Vote transfers this round:</span>
+								{#each candidates as transferCandidate}
+									{@const transferred = getTransferredVotes(transferCandidate.id)}
+									{#if transferred > 0}
+										<div class="ml-2">• {transferCandidate.name}: +{transferred} votes</div>
+									{/if}
+								{/each}
+							</div>
+						{/if}
 					{/if}
 					{#if currentRoundData.winner}
 						<div class="text-green-600 font-medium">

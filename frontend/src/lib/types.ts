@@ -99,12 +99,17 @@ export interface FinalRanking {
 	eliminatedRound?: number;
 }
 
+export interface VoteCounts {
+	votes: number;
+	percentage: number;
+}
+
 export interface RCVRound {
 	roundNumber: number;
-	voteCounts: Record<string, number>;
+	vote_counts: Record<string, VoteCounts>;
 	eliminated?: string;
 	winner?: string;
-	exhaustedBallots: number;
+	exhausted_ballots: number;
 }
 
 // API types
