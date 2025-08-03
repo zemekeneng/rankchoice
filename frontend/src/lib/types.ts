@@ -122,6 +122,8 @@ export interface RCVRound {
 	eliminated?: string | EliminatedCandidate;
 	winner?: string | WinnerCandidate;
 	exhausted_ballots: number;
+	total_votes: number;
+	majority_threshold: number;
 	tiebreak_reason?: string;
 }
 

@@ -67,12 +67,13 @@
 		return colorMap;
 	});
 
-	// Get vote percentage for a candidate in current round
+	// Get vote percentage for a candidate in current round (as % of total active votes)
 	function getVotePercentage(candidateId: string): number {
 		if (!currentRoundData) return 0;
 		const voteData = currentRoundData.vote_counts[candidateId];
 		const votes = voteData ? voteData.votes : 0;
-		return totalVotes > 0 ? (votes / totalVotes) * 100 : 0;
+		const activeVotes = currentRoundData.total_votes || 0;
+		return activeVotes > 0 ? (votes / activeVotes) * 100 : 0;
 	}
 
 	// Get vote count for a candidate in current round
@@ -156,16 +157,18 @@
 		return getPreviousRoundVotes(candidateId);
 	}
 
-	// Calculate percentage of base votes
+	// Calculate percentage of base votes (as % of total active votes)
 	function getBaseVotePercentage(candidateId: string): number {
 		const baseVotes = getBaseVotes(candidateId);
-		return totalVotes > 0 ? (baseVotes / totalVotes) * 100 : 0;
+		const activeVotes = currentRoundData?.total_votes || 0;
+		return activeVotes > 0 ? (baseVotes / activeVotes) * 100 : 0;
 	}
 
-	// Calculate percentage of transferred votes
+	// Calculate percentage of transferred votes (as % of total active votes)
 	function getTransferredVotePercentage(candidateId: string): number {
 		const transferredVotes = getTransferredVotes(candidateId);
-		return totalVotes > 0 ? (transferredVotes / totalVotes) * 100 : 0;
+		const activeVotes = currentRoundData?.total_votes || 0;
+		return activeVotes > 0 ? (transferredVotes / activeVotes) * 100 : 0;
 	}
 
 	// Get vote distribution for eliminated candidates (where their votes went)
@@ -535,7 +538,7 @@
 								<!-- Remove majority threshold indicator -->
 							{:else}
 								<!-- Previously eliminated candidate - show only distribution bar -->
-								{@const showWidth = previouslyEliminated ? (currentRound === 0 ? percentage : getPreviousRoundVotes(candidate.id) / totalVotes * 100) : percentage}
+								{@const showWidth = previouslyEliminated ? (currentRound === 0 ? percentage : getPreviousRoundVotes(candidate.id) / (currentRoundData?.total_votes || 1) * 100) : percentage}
 								{@const distribution = getVoteDistribution(candidate.id)}
 								
 								{#if Object.keys(distribution).length > 0}
