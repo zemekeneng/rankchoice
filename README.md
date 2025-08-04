@@ -83,15 +83,28 @@ rankchoice/
    cd rankchoice
    ```
 
-2. **Install dependencies and start services**
+2. **Start the development environment**
+   ```bash
+   make dev-bg
+   ```
+   
+   *For first-time setup with dependency installation:*
    ```bash
    make quick-start
    ```
 
-3. **Access the application**
+3. **Verify everything is running**
+   ```bash
+   make status
+   make health
+   ```
+
+4. **Access the application**
    - Frontend: http://localhost:5173
    - Backend API: http://localhost:8080
    - MailHog (email testing): http://localhost:8025
+
+> 📖 **Important**: Follow the [Development Process](docs/DEVELOPMENT_PROCESS.md) for the complete standard workflow. This prevents common issues like 404 errors and service conflicts.
 
 ### Development Commands
 
@@ -119,12 +132,22 @@ For detailed commands, see [`docs/MAKEFILE_COMMANDS.md`](docs/MAKEFILE_COMMANDS.
 
 ## 📖 Documentation
 
+### 🚀 Getting Started
+- **[Quick Start Card](QUICKSTART.md)** - **ONE-PAGE** developer reference (START HERE)
+- **[Development Process](docs/DEVELOPMENT_PROCESS.md)** - Complete standard workflow
+- **[Makefile Commands](docs/MAKEFILE_COMMANDS.md)** - Full command reference
+- **[Setup Instructions](#-quick-start)** - Detailed setup guide
+
+### 📋 Project Information
 - **[Development Status](DEVELOPMENT_STATUS.md)** - Current implementation status and roadmap
 - **[Project Planning](PLANNING.md)** - Complete project specification and architecture
+
+### 🔧 Technical Documentation
 - **[API Specification](docs/API_SPECIFICATION.md)** - Detailed REST API documentation
 - **[RCV Algorithm](docs/RCV_ALGORITHM.md)** - Ranked-choice voting implementation
 - **[Svelte 5 Guide](docs/SVELTE5_GUIDE.md)** - Frontend development patterns
-- **[Makefile Commands](docs/MAKEFILE_COMMANDS.md)** - Development workflow reference
+
+### 🧪 Testing
 - **[Testing Guide](backend/docs/TESTING_GUIDE.md)** - Backend testing documentation
 - **[E2E Tests README](frontend/e2e/README.md)** - End-to-end testing guide
 

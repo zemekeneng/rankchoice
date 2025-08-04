@@ -8,7 +8,9 @@ use uuid::Uuid;
 
 use crate::models::ballot::Voter;
 use crate::models::poll::Poll;
+use crate::models::user::User;
 use crate::services::auth::AuthService;
+use crate::services::email::{EmailService, VoterInvitationRequest};
 
 #[derive(Debug, Serialize)]
 pub struct ApiResponse<T> {
@@ -210,11 +212,82 @@ pub async fn create_voter(
 
     let voting_url = format!("http://localhost:5173/vote/{}", voter.ballot_token);
 
+    // Send email invitation (if voter has an email)
+    if let Some(ref voter_email) = voter.email {
+        if !voter_email.starts_with("Anonymous-") {
+            // Get poll owner information
+            let poll_owner = match User::find_by_id(pool, poll.user_id).await {
+                Ok(Some(user)) => user,
+                Ok(None) => {
+                    tracing::warn!("Poll owner not found for poll {}", poll.id);
+                    // Continue without sending email
+                    User {
+                        id: poll.user_id,
+                        email: "unknown@rankchoice.app".to_string(),
+                        name: Some("Poll Organizer".to_string()),
+                        password_hash: String::new(),
+                        role: "pollster".to_string(),
+                        created_at: chrono::Utc::now(),
+                        updated_at: chrono::Utc::now(),
+                    }
+                }
+                Err(e) => {
+                    tracing::error!("Database error finding poll owner: {}", e);
+                    // Continue without sending email
+                    User {
+                        id: poll.user_id,
+                        email: "unknown@rankchoice.app".to_string(),
+                        name: Some("Poll Organizer".to_string()),
+                        password_hash: String::new(),
+                        role: "pollster".to_string(),
+                        created_at: chrono::Utc::now(),
+                        updated_at: chrono::Utc::now(),
+                    }
+                }
+            };
+
+            // Create email service and send invitation
+            match EmailService::new() {
+                Ok(email_service) => {
+                    let email_request = VoterInvitationRequest {
+                        poll_title: poll.title.clone(),
+                        poll_description: poll.description.clone(),
+                        voting_url: voting_url.clone(),
+                        poll_owner_name: poll_owner.name.unwrap_or_else(|| "Poll Organizer".to_string()),
+                        poll_owner_email: poll_owner.email,
+                        closes_at: poll.closes_at.map(|dt| dt.to_rfc3339()),
+                        voter_name: None, // We could extract this from email if needed
+                        to: voter_email.clone(),
+                    };
+
+                    match email_service.send_voter_invitation(email_request).await {
+                        Ok(email_result) => {
+                            if email_result.success {
+                                tracing::info!("✅ Email invitation sent to {}", voter_email);
+                            } else {
+                                tracing::warn!("⚠️ Email service responded with failure for {}: {:?}", 
+                                    voter_email, email_result.error);
+                            }
+                        }
+                        Err(e) => {
+                            tracing::error!("❌ Failed to send email invitation to {}: {}", voter_email, e);
+                            // Don't fail the voter creation if email fails
+                        }
+                    }
+                }
+                Err(e) => {
+                    tracing::error!("❌ Failed to create email service: {}", e);
+                    // Don't fail the voter creation if email service setup fails
+                }
+            }
+        }
+    }
+
     let response = VoterResponse {
         id: voter.id.to_string(),
         poll_id: voter.poll_id.to_string(),
         email: voter.email.clone(),
-                        ballot_token: voter.ballot_token.clone(),
+        ballot_token: voter.ballot_token.clone(),
         has_voted: voter.has_voted(),
         invited_at: voter.invited_at.to_rfc3339(),
         voted_at: voter.voted_at.map(|dt| dt.to_rfc3339()),

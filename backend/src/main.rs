@@ -58,6 +58,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/api/auth/register", post(api::auth::register))
         .route("/api/auth/login", post(api::auth::login))
         .route("/api/auth/refresh", post(api::auth::refresh))
+        // Public poll routes (no auth required)
+        .route("/api/public/polls/:id", get(api::polls::get_public_poll))
+        .route("/api/public/polls/:id/vote", post(api::voting::submit_anonymous_vote))
         // Protected poll routes
         .route("/api/polls", get(api::polls::list_polls))
         .route("/api/polls", post(api::polls::create_poll))
@@ -81,6 +84,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         // Results routes (protected)
         .route("/api/polls/:id/results", get(api::results::get_poll_results))
         .route("/api/polls/:id/results/rounds", get(api::results::get_rcv_rounds))
+        .route("/api/polls/:id/ballots/anonymous", get(api::results::get_anonymous_ballots))
         .layer(CorsLayer::permissive())
         .with_state(auth_service);
 

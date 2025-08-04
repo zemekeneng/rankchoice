@@ -3,7 +3,7 @@ use axum::{
     http::StatusCode,
     Json,
 };
-use serde::Serialize;
+use serde::{Serialize, Deserialize};
 use uuid::Uuid;
 use ipnetwork::IpNetwork;
 use std::net::{IpAddr, SocketAddr};
@@ -379,4 +379,181 @@ pub async fn get_voting_receipt(
     };
 
     Ok(Json(create_api_response(response)))
+}
+
+// Anonymous voting structures
+#[derive(Debug, Deserialize)]
+pub struct AnonymousVoteRequest {
+    pub rankings: Vec<AnonymousRanking>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct AnonymousRanking {
+    pub candidate_id: Uuid,
+    pub rank: i32,
+}
+
+#[derive(Debug, Serialize)]
+pub struct AnonymousVoteResponse {
+    pub ballot: AnonymousBallotInfo,
+    pub receipt: VotingReceipt,
+}
+
+#[derive(Debug, Serialize)]
+pub struct AnonymousBallotInfo {
+    pub id: Uuid,
+    pub submitted_at: chrono::DateTime<chrono::Utc>,
+}
+
+/// POST /api/public/polls/:id/vote - Submit anonymous vote for public poll
+pub async fn submit_anonymous_vote(
+    Path(poll_id): Path<Uuid>,
+    State(auth_service): State<AuthService>,
+    connect_info: Option<ConnectInfo<SocketAddr>>,
+    Json(request): Json<AnonymousVoteRequest>,
+) -> Result<Json<ApiResponse<AnonymousVoteResponse>>, StatusCode> {
+    let pool = auth_service.pool();
+    let ip_address = extract_ip_address(connect_info);
+
+    // Get poll and verify it's public and open
+    let poll = match Poll::find_by_id(pool, poll_id).await {
+        Ok(Some(poll)) => poll,
+        Ok(None) => {
+            return Ok(Json(create_error_response("NOT_FOUND", "Poll not found")));
+        }
+        Err(e) => {
+            tracing::error!("Database error finding poll: {}", e);
+            return Err(StatusCode::INTERNAL_SERVER_ERROR);
+        }
+    };
+
+    // Verify poll is public
+    if !poll.is_public {
+        return Ok(Json(create_error_response("POLL_NOT_PUBLIC", "This poll is not open for public voting")));
+    }
+
+    // Check if poll is open for voting
+    let now = chrono::Utc::now();
+    let is_open = poll.opens_at.map_or(true, |opens| now >= opens) &&
+                  poll.closes_at.map_or(true, |closes| now <= closes);
+
+    if !is_open {
+        return Ok(Json(create_error_response("POLL_CLOSED", "This poll is not currently open for voting")));
+    }
+
+    // Validate ballot rankings
+    if request.rankings.is_empty() {
+        return Ok(Json(create_error_response("VALIDATION_ERROR", "Ballot must contain at least one ranking")));
+    }
+
+    // Verify all candidate IDs belong to this poll
+    let candidates = match Candidate::find_by_poll_id(pool, poll_id).await {
+        Ok(candidates) => candidates,
+        Err(e) => {
+            tracing::error!("Database error finding candidates: {}", e);
+            return Err(StatusCode::INTERNAL_SERVER_ERROR);
+        }
+    };
+
+    let valid_candidate_ids: std::collections::HashSet<Uuid> = candidates.iter().map(|c| c.id).collect();
+    
+    for ranking in &request.rankings {
+        if !valid_candidate_ids.contains(&ranking.candidate_id) {
+            return Ok(Json(create_error_response("VALIDATION_ERROR", "Invalid candidate ID in ballot")));
+        }
+    }
+
+    // Validate ranking sequence (should be 1, 2, 3, etc.)
+    let mut ranks: Vec<i32> = request.rankings.iter().map(|r| r.rank).collect();
+    ranks.sort();
+    for (i, &rank) in ranks.iter().enumerate() {
+        if rank != (i + 1) as i32 {
+            return Ok(Json(create_error_response("VALIDATION_ERROR", "Rankings must be sequential starting from 1")));
+        }
+    }
+
+    // Convert anonymous rankings to ballot rankings
+    let ballot_rankings: Vec<crate::models::ballot::BallotRanking> = request.rankings.iter().map(|r| {
+        crate::models::ballot::BallotRanking {
+            candidate_id: r.candidate_id,
+            rank: r.rank,
+        }
+    }).collect();
+
+    // Create anonymous ballot (without voter_id)
+    let ballot_response = match create_anonymous_ballot(pool, poll_id, ballot_rankings, ip_address).await {
+        Ok(ballot) => ballot,
+        Err(e) => {
+            tracing::error!("Database error creating anonymous ballot: {}", e);
+            return Err(StatusCode::INTERNAL_SERVER_ERROR);
+        }
+    };
+
+    // Generate receipt
+    let receipt_code = format!("ANON-{}-{}", 
+        chrono::Utc::now().format("%Y"),
+        ballot_response.id.to_string().split('-').next().unwrap_or("UNKNOWN")
+    );
+    
+    let verification_url = format!("https://rankchoice.app/verify/{}", receipt_code);
+
+    let response = AnonymousVoteResponse {
+        ballot: AnonymousBallotInfo {
+            id: ballot_response.id,
+            submitted_at: ballot_response.submitted_at,
+        },
+        receipt: VotingReceipt {
+            receipt_code,
+            verification_url,
+        },
+    };
+
+    tracing::info!("Anonymous vote submitted for poll {} with ballot ID {}", poll_id, ballot_response.id);
+
+    Ok(Json(create_api_response(response)))
+}
+
+// Helper function to create anonymous ballot
+async fn create_anonymous_ballot(
+    pool: &sqlx::PgPool,
+    poll_id: Uuid,
+    rankings: Vec<crate::models::ballot::BallotRanking>,
+    ip_address: Option<IpNetwork>,
+) -> Result<AnonymousBallotInfo, sqlx::Error> {
+    let mut tx = pool.begin().await?;
+    
+    // Create ballot without voter_id (NULL)
+    let ballot_row = sqlx::query!(
+        r#"
+        INSERT INTO ballots (poll_id, voter_id, ip_address, submitted_at)
+        VALUES ($1, NULL, $2, NOW())
+        RETURNING id, submitted_at
+        "#,
+        poll_id,
+        ip_address
+    )
+    .fetch_one(&mut *tx)
+    .await?;
+
+    // Insert rankings
+    for ranking in rankings {
+        sqlx::query!(
+            r#"
+            INSERT INTO rankings (ballot_id, candidate_id, rank)
+            VALUES ($1, $2, $3)
+            "#,
+            ballot_row.id,
+            ranking.candidate_id,
+            ranking.rank
+        )
+        .execute(&mut *tx)
+        .await?;
+    }
+
+    tx.commit().await?;
+
+    Ok(AnonymousBallotInfo {
+        id: ballot_row.id,
+        submitted_at: ballot_row.submitted_at.expect("submitted_at cannot be null"),
+    })
 } 

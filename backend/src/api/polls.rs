@@ -192,6 +192,65 @@ pub async fn list_polls(
     }
 }
 
+/// GET /api/public/polls/:id - Get public poll (no auth required)
+pub async fn get_public_poll(
+    Path(poll_id): Path<Uuid>,
+    State(auth_service): State<AuthService>,
+) -> Result<Json<ApiResponse<crate::models::poll::PollResponse>>, (StatusCode, Json<ApiResponse<()>>)> {
+    match Poll::find_by_id(auth_service.pool(), poll_id).await {
+        Ok(Some(poll)) => {
+            // Check if poll is public
+            if !poll.is_public {
+                return Err((
+                    StatusCode::FORBIDDEN,
+                    Json(ApiResponse::<()>::error("POLL_NOT_PUBLIC", "This poll is not public")),
+                ));
+            }
+
+            // Load candidates for the poll
+            let candidates = match crate::models::candidate::Candidate::find_by_poll_id(auth_service.pool(), poll_id).await {
+                Ok(candidates) => candidates,
+                Err(e) => {
+                    tracing::error!("Failed to load candidates for poll {}: {}", poll_id, e);
+                    return Err((
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        Json(ApiResponse::<()>::error("CANDIDATES_LOAD_FAILED", "Failed to load poll candidates")),
+                    ));
+                }
+            };
+
+            let poll_response = crate::models::poll::PollResponse {
+                id: poll.id,
+                user_id: poll.user_id,
+                title: poll.title,
+                description: poll.description,
+                poll_type: poll.poll_type,
+                num_winners: poll.num_winners,
+                opens_at: poll.opens_at,
+                closes_at: poll.closes_at,
+                is_public: poll.is_public,
+                registration_required: poll.registration_required,
+                created_at: poll.created_at,
+                updated_at: poll.updated_at,
+                candidates,
+            };
+
+            Ok(Json(ApiResponse::success(poll_response)))
+        }
+        Ok(None) => Err((
+            StatusCode::NOT_FOUND,
+            Json(ApiResponse::<()>::error("POLL_NOT_FOUND", "Poll not found")),
+        )),
+        Err(e) => {
+            tracing::error!("Failed to get poll: {}", e);
+            Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiResponse::<()>::error("POLL_GET_FAILED", "Failed to retrieve poll")),
+            ))
+        }
+    }
+}
+
 pub async fn get_poll(
     State(auth_service): State<AuthService>,
     headers: HeaderMap,

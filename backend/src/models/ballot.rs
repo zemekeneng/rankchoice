@@ -189,7 +189,8 @@ impl Ballot {
             .into_iter()
             .map(|row| crate::services::rcv::Ballot {
                 id: row.id,
-                voter_id: row.voter_id.expect("voter_id cannot be null"),
+                // For anonymous ballots, voter_id is NULL, so use a placeholder UUID
+                voter_id: row.voter_id.unwrap_or_else(|| Uuid::nil()),
                 rankings: row.candidate_ids.unwrap_or_default(),
             })
             .collect();
