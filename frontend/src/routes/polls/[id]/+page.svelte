@@ -531,7 +531,7 @@
 									<dt class="text-sm font-medium text-gray-500 truncate">
 										Total Votes
 									</dt>
-									<dd class="text-lg font-medium text-gray-900">
+									<dd class="text-lg font-medium text-gray-900" data-testid="total-votes">
 										{results?.totalVotes || voterStats.votedCount}
 									</dd>
 								</dl>

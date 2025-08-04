@@ -326,7 +326,7 @@
 								{#if rankedCandidates.length > 0}
 									<p>You have ranked {rankedCandidates.length} candidate{rankedCandidates.length === 1 ? '' : 's'}</p>
 								{:else}
-									<p>Please rank at least one candidate to submit your ballot</p>
+									<p>Please rank at least one candidate</p>
 								{/if}
 							</div>
 							

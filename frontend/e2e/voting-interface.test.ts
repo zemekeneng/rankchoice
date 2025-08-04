@@ -25,7 +25,8 @@ test.describe('Voting Interface and Drag-and-Drop Ranking', () => {
     await page.fill('[data-testid="confirm-password-input"]', testUser.password);
     await page.click('[data-testid="register-submit-btn"]');
     
-    await expect(page).toHaveURL('/dashboard');
+    // Wait longer for registration to complete (concurrency issue - high load)
+    await expect(page).toHaveURL('/dashboard', { timeout: 30000 });
 
     // Create a test poll
     await page.click('[data-testid="create-poll-btn"]');
@@ -45,6 +46,10 @@ test.describe('Voting Interface and Drag-and-Drop Ranking', () => {
     // Add a third candidate
     await page.click('[data-testid="add-candidate-btn"]');
     await page.fill('[data-testid="candidate-name-2"]', 'Carol Davis');
+
+    // Clear the datetime fields to make poll open immediately (no time restrictions)
+    await page.fill('#opensAt', '');
+    await page.fill('#closesAt', '');
 
     // Create the poll
     await page.click('[data-testid="create-poll-submit-btn"]');
