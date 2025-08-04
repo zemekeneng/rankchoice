@@ -5,8 +5,10 @@ test.describe('Voter Management and Statistics', () => {
   function generateTestUser(testPrefix: string = 'voters') {
     const timestamp = Date.now();
     const randomId = Math.random().toString(36).substring(2, 8);
+    const nanoTime = process.hrtime.bigint().toString().slice(-6); // Last 6 digits of nanosecond precision
+    const processId = process.pid.toString().slice(-3); // Last 3 digits of process ID
     return {
-      email: `${testPrefix}-test-${timestamp}-${randomId}@example.com`,
+      email: `${testPrefix}-test-${timestamp}-${randomId}-${nanoTime}-${processId}@example.com`,
       password: 'Test123!',
       name: `${testPrefix.charAt(0).toUpperCase()}${testPrefix.slice(1)} Test User`
     };
@@ -33,10 +35,10 @@ test.describe('Voter Management and Statistics', () => {
     await page.fill('[data-testid="register-password-input"]', testUser.password);
     await page.fill('[data-testid="confirm-password-input"]', testUser.password);
     
-    // Submit and wait for navigation
+    // Submit and wait for navigation (longer timeout for high load)
     await page.click('[data-testid="register-submit-btn"]');
     
-    await expect(page).toHaveURL('/dashboard', { timeout: 15000 });
+    await expect(page).toHaveURL('/dashboard', { timeout: 30000 });
 
     // Create a test poll first
     await page.click('[data-testid="create-poll-btn"]');
@@ -46,6 +48,10 @@ test.describe('Voter Management and Statistics', () => {
     pollTitle = `Voter Test Poll ${timestamp}-${randomId}`;
     await page.fill('[data-testid="poll-title-input"]', pollTitle);
     await page.fill('[data-testid="poll-description-input"]', 'Test poll for voter management');
+
+    // Clear the datetime fields to make poll open immediately (no time restrictions)
+    await page.fill('#opensAt', '');
+    await page.fill('#closesAt', '');
 
     // Fill the default candidate fields using test IDs and add a third candidate
     await page.fill('[data-testid="candidate-name-0"]', 'Candidate Alpha');

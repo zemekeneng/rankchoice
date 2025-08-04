@@ -4,8 +4,9 @@ use axum::{
     Json,
 };
 use serde::Serialize;
-use sqlx::PgPool;
+use sqlx::{PgPool, postgres::PgPoolOptions};
 use std::net::SocketAddr;
+use std::time::Duration;
 use tower_http::cors::CorsLayer;
 use tracing_subscriber;
 
@@ -29,7 +30,7 @@ async fn health() -> Json<HealthResponse> {
     })
 }
 
-#[tokio::main]
+#[tokio::main(flavor = "multi_thread", worker_threads = 4)]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize tracing
     tracing_subscriber::fmt::init();
@@ -37,16 +38,24 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Load environment variables
     dotenv::dotenv().ok();
 
-    // Database connection
+    // Database connection with optimized pool settings
     let database_url = std::env::var("DATABASE_URL")
         .expect("DATABASE_URL must be set in environment");
     
-    tracing::info!("Connecting to database...");
-    let pool = PgPool::connect(&database_url).await?;
+    tracing::info!("Connecting to database with optimized pool...");
+    let pool = PgPoolOptions::new()
+        .max_connections(30)  // Increase from default ~10 to handle concurrent requests
+        .min_connections(5)   // Keep some connections warm
+        .acquire_timeout(Duration::from_secs(10))  // Longer timeout for high concurrency
+        .idle_timeout(Duration::from_secs(300))    // 5 minutes idle timeout
+        .max_lifetime(Duration::from_secs(1800))   // 30 minutes max connection lifetime
+        .connect(&database_url)
+        .await?;
     
     // Run database migrations
     sqlx::migrate!("./migrations").run(&pool).await?;
     tracing::info!("Database migrations completed");
+    tracing::info!("Database pool configured with {} max connections", 30);
 
     // Initialize services
     let auth_service = AuthService::new(pool.clone());

@@ -149,28 +149,38 @@ class AuthStore {
 	}
 
 	async register(userData: RegisterRequest): Promise<void> {
+		console.log(`🔍 [AUTH STORE] Starting registration for: ${userData.email}`);
 		this.isLoading = true;
 		this.error = null;
 
 		try {
+			console.log('🔍 [AUTH STORE] Calling API register');
 			const response = await apiClient.register(userData);
+			console.log('🔍 [AUTH STORE] API register successful');
 			
+			console.log('🔍 [AUTH STORE] Setting auth data');
 			this.setAuthData(response.user, {
 				token: response.token,
 				refreshToken: response.refreshToken
 			});
 
+			console.log('🔍 [AUTH STORE] Redirecting to dashboard');
 			// Redirect to dashboard after successful registration
 			await goto('/dashboard', { invalidateAll: true });
+			console.log('🔍 [AUTH STORE] Dashboard redirect completed');
 		} catch (error) {
+			console.log(`❌ [AUTH STORE] Registration error:`, error);
 			if (error instanceof APIError) {
 				this.error = error.message;
+				console.log(`❌ [AUTH STORE] API Error: ${error.message}`);
 			} else {
 				this.error = 'Registration failed. Please try again.';
+				console.log(`❌ [AUTH STORE] Unknown error: ${error}`);
 			}
 			throw error;
 		} finally {
 			this.isLoading = false;
+			console.log('🔍 [AUTH STORE] Registration process completed');
 		}
 	}
 

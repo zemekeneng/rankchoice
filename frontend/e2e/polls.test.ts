@@ -1,16 +1,25 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Poll Creation and Management', () => {
-  test.beforeEach(async ({ page }) => {
-    // Generate unique user for each test to avoid conflicts
+  // Function to generate unique test data for each test to avoid collisions
+  function generateTestUser(testPrefix: string = 'polls') {
     const timestamp = Date.now();
     const randomId = Math.random().toString(36).substring(7);
-    const testUser = {
-      email: `polls-test-${timestamp}-${randomId}@example.com`,
+    const extraRandom = Math.random().toString(36).substring(2, 8); // Additional randomness
+    const microTime = performance.now().toString().replace('.', '').slice(-6); // High precision timing
+    return {
+      email: `${testPrefix}-${timestamp}-${randomId}-${extraRandom}-${microTime}@example.com`,
       password: 'Test123!',
-      name: 'Polls Test User'
+      name: `${testPrefix.charAt(0).toUpperCase()}${testPrefix.slice(1)} Test User`
     };
+  }
 
+  test.beforeEach(async ({ page }) => {
+    // Generate unique user for each test to avoid conflicts
+    const testUser = generateTestUser('polls');
+
+    console.log(`🔍 [POLLS BEFOREEACH] Registering user: ${testUser.email}`);
+    
     // Register and login for each test
     await page.goto('/register');
     await page.fill('[data-testid="register-email-input"]', testUser.email);
@@ -19,8 +28,10 @@ test.describe('Poll Creation and Management', () => {
     await page.fill('[data-testid="confirm-password-input"]', testUser.password);
     await page.click('[data-testid="register-submit-btn"]');
     
+    console.log(`🔍 [POLLS BEFOREEACH] Waiting for dashboard redirect...`);
     // Should be on dashboard now
     await expect(page).toHaveURL('/dashboard');
+    console.log(`🔍 [POLLS BEFOREEACH] Successfully on dashboard`);
   });
 
   test('should show empty state when no polls exist', async ({ page }) => {
@@ -40,9 +51,12 @@ test.describe('Poll Creation and Management', () => {
   });
 
   test('should create a single-winner poll successfully', async ({ page }) => {
+    console.log(`🔍 [POLL TEST] Starting poll creation test`);
+    
     // Navigate to poll creation
     await page.click('[data-testid="create-poll-btn"]');
     await expect(page).toHaveURL('/polls/new');
+    console.log(`🔍 [POLL TEST] Navigated to poll creation form`);
 
     // Fill poll basic information
     await page.fill('[data-testid="poll-title-input"]', 'E2E Test Poll - Single Winner');
@@ -59,17 +73,24 @@ test.describe('Poll Creation and Management', () => {
     await page.click('[data-testid="add-candidate-btn"]');
     await page.fill('[data-testid="candidate-name-2"]', 'Option C');
 
+    console.log(`🔍 [POLL TEST] Form filled, submitting poll...`);
+    
     // Submit the form
     await page.click('[data-testid="create-poll-submit-btn"]');
 
+    console.log(`🔍 [POLL TEST] Poll submitted, waiting for dashboard redirect...`);
+    
     // Should redirect to dashboard (query parameter gets removed quickly)
     await page.waitForURL('/dashboard', { timeout: 10000 });
+    console.log(`🔍 [POLL TEST] Successfully redirected to dashboard`);
+    
     // Wait for dashboard to load and show the success state
 
     // Verify poll appears in dashboard list
     await expect(page.locator('text=E2E Test Poll - Single Winner')).toBeVisible();
     // Use more specific selector to avoid strict mode violation
     await expect(page.locator('[data-testid^="poll-type-"]').filter({ hasText: 'Single Winner' })).toBeVisible();
+    console.log(`🔍 [POLL TEST] Poll creation test completed successfully`);
   });
 
   test('should create a multi-winner poll successfully', async ({ page }) => {
@@ -138,18 +159,17 @@ test.describe('Poll Creation and Management', () => {
   });
 
   test('should show poll preview before creation', async ({ page }) => {
-    await page.click('button:has-text("Create Poll")');
+    await page.click('[data-testid="create-poll-btn"]');
 
     // Fill valid form data
-    await page.fill('input[id="title"]', 'Preview Test Poll');
-    await page.fill('textarea[id="description"]', 'Testing the preview functionality');
+    await page.fill('[data-testid="poll-title-input"]', 'Preview Test Poll');
+    await page.fill('[data-testid="poll-description-input"]', 'Testing the preview functionality');
     
-    const candidateInputs = page.locator('input[placeholder="Candidate name"]');
-    await candidateInputs.nth(0).fill('Preview Option A');
-    await candidateInputs.nth(1).fill('Preview Option B');
+    await page.fill('[data-testid="candidate-name-0"]', 'Preview Option A');
+    await page.fill('[data-testid="candidate-name-1"]', 'Preview Option B');
 
     // Click preview button
-    await page.click('button:has-text("Preview")');
+    await page.click('[data-testid="preview-poll-btn"]');
 
     // Should show preview modal/section
     await expect(page.locator('text=Poll Preview')).toBeVisible();
@@ -158,54 +178,55 @@ test.describe('Poll Creation and Management', () => {
     await expect(page.locator('text=Preview Option B')).toBeVisible();
 
     // Should be able to create from preview
-    await page.click('button:has-text("Create Poll")');
+    await page.click('[data-testid="create-poll-from-preview-btn"]');
     await page.waitForURL('/dashboard', { timeout: 10000 });
   });
 
   test('should handle candidate management (add, remove, reorder)', async ({ page }) => {
-    await page.click('button:has-text("Create Poll")');
+    await page.click('[data-testid="create-poll-btn"]');
 
     // Fill basic info
-    await page.fill('input[id="title"]', 'Candidate Management Test');
+    await page.fill('[data-testid="poll-title-input"]', 'Candidate Management Test');
 
     // Start with 2 default candidates
-    const candidateInputs = page.locator('input[placeholder="Candidate name"]');
-    await candidateInputs.nth(0).fill('First Candidate');
-    await candidateInputs.nth(1).fill('Second Candidate');
+    await page.fill('[data-testid="candidate-name-0"]', 'First Candidate');
+    await page.fill('[data-testid="candidate-name-1"]', 'Second Candidate');
 
     // Add a third candidate
-    await page.click('button:has-text("Add Another Candidate")');
-    await candidateInputs.nth(2).fill('Third Candidate');
+    await page.click('[data-testid="add-candidate-btn"]');
+    await page.fill('[data-testid="candidate-name-2"]', 'Third Candidate');
 
     // Verify 3 candidates exist
-    await expect(candidateInputs).toHaveCount(3);
+    await expect(page.locator('[data-testid="candidate-name-0"]')).toBeVisible();
+    await expect(page.locator('[data-testid="candidate-name-1"]')).toBeVisible();
+    await expect(page.locator('[data-testid="candidate-name-2"]')).toBeVisible();
 
     // Try to remove a candidate (should have remove buttons when >2 candidates)
-    const removeButtons = page.locator('button[title="Remove candidate"]');
-    if (await removeButtons.count() > 0) {
-      await removeButtons.first().click();
-      await expect(candidateInputs).toHaveCount(2);
-    }
+    const removeButton = page.locator('[data-testid="remove-candidate-2"]');
+    await expect(removeButton).toBeVisible();
+    await removeButton.click();
+    
+    // Verify only 2 candidates remain
+    await expect(page.locator('[data-testid="candidate-name-2"]')).not.toBeVisible();
 
     // Test reordering with move up/down buttons
-    const moveUpButtons = page.locator('button[title="Move up"]');
-    const moveDownButtons = page.locator('button[title="Move down"]');
+    const moveUpButton = page.locator('[data-testid="move-candidate-up-1"]');
+    const moveDownButton = page.locator('[data-testid="move-candidate-down-0"]');
     
     // These buttons should exist
-    await expect(moveUpButtons.first()).toBeVisible();
-    await expect(moveDownButtons.first()).toBeVisible();
+    await expect(moveUpButton).toBeVisible();
+    await expect(moveDownButton).toBeVisible();
   });
 
   test('should display correct date format in dashboard', async ({ page }) => {
     // Create a poll first
-    await page.click('button:has-text("Create Poll")');
-    await page.fill('input[id="title"]', 'Date Format Test Poll');
+    await page.click('[data-testid="create-poll-btn"]');
+    await page.fill('[data-testid="poll-title-input"]', 'Date Format Test Poll');
     
-    const candidateInputs = page.locator('input[placeholder="Candidate name"]');
-    await candidateInputs.nth(0).fill('Option 1');
-    await candidateInputs.nth(1).fill('Option 2');
+    await page.fill('[data-testid="candidate-name-0"]', 'Option 1');
+    await page.fill('[data-testid="candidate-name-1"]', 'Option 2');
     
-    await page.click('button[type="submit"]:has-text("Create Poll")');
+    await page.click('[data-testid="create-poll-submit-btn"]');
     await page.waitForURL('/dashboard', { timeout: 10000 });
 
     // Verify the date is formatted correctly (not "Invalid Date")
@@ -223,14 +244,13 @@ test.describe('Poll Creation and Management', () => {
 
   test('should persist data after page refresh', async ({ page }) => {
     // Create a poll
-    await page.click('button:has-text("Create Poll")');
-    await page.fill('input[id="title"]', 'Persistence Test Poll');
+    await page.click('[data-testid="create-poll-btn"]');
+    await page.fill('[data-testid="poll-title-input"]', 'Persistence Test Poll');
     
-    const candidateInputs = page.locator('input[placeholder="Candidate name"]');
-    await candidateInputs.nth(0).fill('Persistent Option A');
-    await candidateInputs.nth(1).fill('Persistent Option B');
+    await page.fill('[data-testid="candidate-name-0"]', 'Persistent Option A');
+    await page.fill('[data-testid="candidate-name-1"]', 'Persistent Option B');
     
-    await page.click('button[type="submit"]:has-text("Create Poll")');
+    await page.click('[data-testid="create-poll-submit-btn"]');
     await page.waitForURL('/dashboard', { timeout: 10000 });
 
     // Verify poll exists

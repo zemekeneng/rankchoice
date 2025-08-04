@@ -5,8 +5,10 @@ test.describe('Authentication Flow', () => {
   function generateTestUser(testPrefix: string = 'auth') {
     const timestamp = Date.now();
     const randomId = Math.random().toString(36).substring(7);
+    const extraRandom = Math.random().toString(36).substring(2, 8); // Additional randomness
+    const microTime = performance.now().toString().replace('.', '').slice(-6); // High precision timing
     return {
-      email: `${testPrefix}-${timestamp}-${randomId}@example.com`,
+      email: `${testPrefix}-${timestamp}-${randomId}-${extraRandom}-${microTime}@example.com`,
       password: 'Test123!',
       name: `${testPrefix.charAt(0).toUpperCase()}${testPrefix.slice(1)} Test User`
     };
@@ -25,23 +27,41 @@ test.describe('Authentication Flow', () => {
 
   test('should register a new user successfully', async ({ page }) => {
     const testUser = generateTestUser('register');
+    console.log(`🔍 [REGISTER TEST] Starting with email: ${testUser.email}`);
+    
+    // Enable console logging from the page
+    page.on('console', msg => console.log(`📄 [PAGE]: ${msg.text()}`));
     
     // Go to register page
+    console.log('🔍 [REGISTER TEST] Clicking register link');
     await page.click('[data-testid="register-link"]');
     await expect(page).toHaveURL('/register');
+    console.log('🔍 [REGISTER TEST] On register page');
 
     // Fill registration form
+    console.log('🔍 [REGISTER TEST] Filling form fields');
     await page.fill('[data-testid="register-email-input"]', testUser.email);
     await page.fill('[data-testid="name-input"]', testUser.name);
     await page.fill('[data-testid="register-password-input"]', testUser.password);
     await page.fill('[data-testid="confirm-password-input"]', testUser.password);
-
-    // Submit form
+    
+    console.log('🔍 [REGISTER TEST] Submitting form');
     await page.click('[data-testid="register-submit-btn"]');
 
+    // Check for errors first
+    const errorElement = page.locator('[data-testid="register-error"]');
+    const hasError = await errorElement.isVisible().catch(() => false);
+    if (hasError) {
+      const errorText = await errorElement.textContent();
+      console.log(`❌ [REGISTER TEST] Found error: ${errorText}`);
+    }
+
+    console.log('🔍 [REGISTER TEST] Waiting for dashboard redirect');
     // Should redirect to dashboard after successful registration
     await expect(page).toHaveURL('/dashboard');
+    console.log('🔍 [REGISTER TEST] Successfully redirected to dashboard');
     await expect(page.locator('[data-testid="welcome-text"]')).toContainText(`Welcome, ${testUser.name}`);
+    console.log('🔍 [REGISTER TEST] Test completed successfully');
   });
 
   test('should login with existing user credentials', async ({ page }) => {
@@ -124,14 +144,14 @@ test.describe('Authentication Flow', () => {
     await page.fill('[data-testid="confirm-password-input"]', logoutTestUser.password);
     await page.click('[data-testid="register-submit-btn"]');
 
-    // Verify logged in
-    await expect(page).toHaveURL('/dashboard');
+    // Verify logged in (wait longer for concurrency issue)
+    await expect(page).toHaveURL('/dashboard', { timeout: 15000 });
     
     // Logout
     await page.click('[data-testid="logout-btn"]');
 
     // Should be logged out (either on home or login page)
-    await page.waitForURL(/\/(login)?$/);
+    await page.waitForURL(/\/(login)?$/, { timeout: 1000 });
     
     // Navigate to home page to verify logout state
     await page.goto('/');

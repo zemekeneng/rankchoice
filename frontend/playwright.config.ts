@@ -4,7 +4,7 @@ export default defineConfig({
 	testDir: 'e2e',
 	fullyParallel: true,
 	retries: 0,
-	workers: process.env.CI ? 2 : undefined, // Use default workers (CPU cores) locally, 2 in CI
+	workers: process.env.CI ? 2 : 2, // Optimal concurrency with Vite optimizations
 	reporter: [['list'], ['html', { open: 'never' }]],
 	use: {
 		baseURL: 'http://localhost:5173',

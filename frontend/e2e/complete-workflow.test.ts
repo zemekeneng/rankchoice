@@ -87,6 +87,10 @@ test.describe('Complete Poll Workflow: Creation → Voting → Results', () => {
     // Close preview modal
     await page.click('[data-testid="close-preview-btn"]');
     
+    // Clear the datetime fields to make poll open immediately (no time restrictions)
+    await page.fill('#opensAt', '');
+    await page.fill('#closesAt', '');
+    
     // Create the poll
     await page.click('[data-testid="create-poll-submit-btn"]');
     
@@ -265,7 +269,7 @@ test.describe('Complete Poll Workflow: Creation → Voting → Results', () => {
     
     // Should show results (exact results depend on RCV algorithm, but should show some results)
     // At minimum, should show that results are available
-    await expect(page.locator('text=Total Votes')).toBeVisible();
+    await expect(page.locator('dt:has-text("Total Votes")')).toBeVisible();
     // Check that we have 3 votes - be specific about which "3" element
     await expect(page.locator('dd:has-text("3")').first()).toBeVisible(); // Total vote count
     
@@ -370,6 +374,11 @@ test.describe('Complete Poll Workflow: Creation → Voting → Results', () => {
     await page.fill('[data-testid="candidate-name-1"]', 'Option B');
     await page.click('[data-testid="add-candidate-btn"]');
     await page.fill('[data-testid="candidate-name-2"]', 'Option C');
+    
+    // Clear the datetime fields to make poll open immediately (no time restrictions)
+    await page.fill('#opensAt', '');
+    await page.fill('#closesAt', '');
+    
     await page.click('[data-testid="create-poll-submit-btn"]');
     
     // Wait for redirect to dashboard after poll creation

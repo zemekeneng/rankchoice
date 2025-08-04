@@ -355,6 +355,7 @@
 							Edit
 						</button>
 						<button
+							data-testid="create-poll-from-preview-btn"
 							onclick={handleSubmit}
 							disabled={isSubmitting}
 							class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-indigo-700 disabled:opacity-50"
@@ -613,6 +614,7 @@
 										<!-- Move buttons -->
 										<button
 											type="button"
+											data-testid="move-candidate-up-{index}"
 											onclick={() => moveCandidateUp(index)}
 											disabled={index === 0}
 											class="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-50"
@@ -624,6 +626,7 @@
 										</button>
 										<button
 											type="button"
+											data-testid="move-candidate-down-{index}"
 											onclick={() => moveCandidateDown(index)}
 											disabled={index === pollForm.candidates.length - 1}
 											class="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-50"
@@ -636,6 +639,7 @@
 										<!-- Delete button -->
 										<button
 											type="button"
+											data-testid="remove-candidate-{index}"
 											onclick={() => removeCandidate(index)}
 											disabled={pollForm.candidates.length <= 2}
 											class="p-1 text-red-400 hover:text-red-600 disabled:opacity-50"

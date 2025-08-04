@@ -193,10 +193,8 @@ pub async fn create_voter(
 
     // Generate display name for anonymous voters
     let display_email = if req.email.is_none() || req.email.as_ref().map_or(true, |e| e.trim().is_empty()) {
-        // Generate a unique anonymous voter code
-        let timestamp = chrono::Utc::now().timestamp();
-        let random_suffix = format!("{:04}", timestamp % 10000);
-        Some(format!("Anonymous-{}", random_suffix))
+        // Generate a truly unique anonymous voter code using UUID
+        Some(format!("Anonymous-{}", Uuid::new_v4()))
     } else {
         req.email
     };

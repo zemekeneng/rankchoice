@@ -223,14 +223,21 @@ class APIClient {
 
 	async createPoll(pollData: CreatePollForm): Promise<Poll> {
 		// Map camelCase frontend fields to snake_case backend fields
+		// Helper function to convert datetime-local format to ISO format
+		const formatDateTime = (dateTimeStr: string): string | null => {
+			if (!dateTimeStr || dateTimeStr.trim() === '') return null;
+			// Convert "2025-08-04T17:36" to "2025-08-04T17:36:00Z"
+			return new Date(dateTimeStr).toISOString();
+		};
+
 		const backendPollData = {
 			title: pollData.title,
 			description: pollData.description,
 			poll_type: pollData.pollType, // camelCase -> snake_case
 			num_winners: pollData.numWinners, // camelCase -> snake_case
-			opens_at: pollData.opensAt,
-			closes_at: pollData.closesAt,
-			is_public: pollData.isPublic, // camelCase -> snake_case ⭐ THIS WAS THE ISSUE!
+			opens_at: formatDateTime(pollData.opensAt),
+			closes_at: formatDateTime(pollData.closesAt),
+			is_public: pollData.isPublic, // camelCase -> snake_case
 			registration_required: pollData.registrationRequired, // camelCase -> snake_case
 			candidates: pollData.candidates
 		};

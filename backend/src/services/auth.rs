@@ -67,26 +67,31 @@ impl AuthService {
     }
 
     pub async fn register(&self, req: CreateUserRequest) -> Result<AuthResponse, AuthError> {
-        // Check if user already exists
-        if let Some(_) = User::find_by_email(&self.pool, &req.email).await? {
-            return Err(AuthError::UserAlreadyExists);
-        }
-
         // Hash the password
         let password_hash = self.hash_password(&req.password)?;
 
-        // Create the user
-        let user = User::create(&self.pool, req, password_hash).await?;
+        // Create the user directly - let database constraint handle duplicates atomically
+        match User::create(&self.pool, req, password_hash).await {
+            Ok(user) => {
+                // Generate tokens
+                let token = self.generate_token(&user, false)?;
+                let refresh_token = self.generate_token(&user, true)?;
 
-        // Generate tokens
-        let token = self.generate_token(&user, false)?;
-        let refresh_token = self.generate_token(&user, true)?;
-
-        Ok(AuthResponse {
-            user: user.into(),
-            token,
-            refresh_token,
-        })
+                Ok(AuthResponse {
+                    user: user.into(),
+                    token,
+                    refresh_token,
+                })
+            }
+            Err(sqlx::Error::Database(db_err)) if db_err.constraint() == Some("users_email_key") => {
+                // Database constraint violation = user already exists
+                Err(AuthError::UserAlreadyExists)
+            }
+            Err(e) => {
+                // Other database errors
+                Err(AuthError::Database(e))
+            }
+        }
     }
 
     pub async fn login(&self, req: LoginRequest) -> Result<AuthResponse, AuthError> {

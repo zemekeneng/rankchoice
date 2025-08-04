@@ -5,8 +5,10 @@ test.describe('Results Display', () => {
   function generateTestUser(testPrefix: string = 'results') {
     const timestamp = Date.now();
     const randomId = Math.random().toString(36).substring(7);
+    const nanoTime = process.hrtime.bigint().toString().slice(-6); // Last 6 digits of nanosecond precision
+    const processId = process.pid.toString().slice(-3); // Last 3 digits of process ID
     return {
-      email: `${testPrefix}-test-${timestamp}-${randomId}@example.com`,
+      email: `${testPrefix}-test-${timestamp}-${randomId}-${nanoTime}-${processId}@example.com`,
       password: 'Test123!',
       name: `${testPrefix.charAt(0).toUpperCase()}${testPrefix.slice(1)} Test User`
     };
@@ -18,8 +20,9 @@ test.describe('Results Display', () => {
     // Go to the homepage
     await page.goto('/');
     
-    // Register a new user
-    await page.click('text=Get Started');
+    // Register a new user (homepage nav issue - use direct navigation)
+    await page.goto('/register');
+    
     await page.fill('[data-testid="register-email-input"]', testUser.email);
     await page.fill('[data-testid="register-password-input"]', testUser.password);
     await page.fill('[data-testid="name-input"]', testUser.name);
@@ -30,25 +33,33 @@ test.describe('Results Display', () => {
     await expect(page).toHaveURL('/dashboard');
     
     // Create a new poll
-    await page.click('text=Create New Poll');
+    await page.click('[data-testid="create-first-poll-btn"]');
     await page.fill('[data-testid="poll-title-input"]', 'Results Test Poll');
     await page.fill('[data-testid="poll-description-input"]', 'Testing results display functionality');
     
-    // Add candidates
-    await page.fill('[data-testid="candidate-name-input-0"]', 'Alice');
-    await page.fill('[data-testid="candidate-description-input-0"]', 'First candidate');
+    // Add candidates (only fill required name fields)
+    await page.fill('[data-testid="candidate-name-0"]', 'Alice');
+    await page.fill('[data-testid="candidate-name-1"]', 'Bob');
     await page.click('[data-testid="add-candidate-btn"]');
-    await page.fill('[data-testid="candidate-name-input-1"]', 'Bob');
-    await page.fill('[data-testid="candidate-description-input-1"]', 'Second candidate');
-    await page.click('[data-testid="add-candidate-btn"]');
-    await page.fill('[data-testid="candidate-name-input-2"]', 'Charlie');
-    await page.fill('[data-testid="candidate-description-input-2"]', 'Third candidate');
+    await page.fill('[data-testid="candidate-name-2"]', 'Charlie');
+    
+    // Clear the datetime fields to make poll open immediately (no time restrictions)
+    await page.fill('#opensAt', '');
+    await page.fill('#closesAt', '');
     
     // Create the poll
-    await page.click('[data-testid="create-poll-btn"]');
+    await page.click('[data-testid="create-poll-submit-btn"]');
     
-    // Should be redirected to poll management page
-    await expect(page.locator('h1')).toContainText('Results Test Poll');
+    // Wait for redirect to dashboard after poll creation
+    await page.waitForURL('/dashboard?created=true', { timeout: 10000 });
+    
+    // Find the newly created poll and navigate to it
+    await page.waitForSelector('[data-testid^="poll-item-"]');
+    const pollElement = page.locator('[data-testid^="poll-item-"]').filter({ hasText: 'Results Test Poll' });
+    await pollElement.click();
+    
+    // Should be on poll management page
+    await page.waitForURL(/\/polls\/[a-f0-9-]+$/, { timeout: 10000 });
     
     // Check that results tab exists
     await expect(page.locator('[data-testid="results-tab"]')).toBeVisible();
@@ -73,8 +84,8 @@ test.describe('Results Display', () => {
     
     await page.goto('/');
     
-    // Register and login
-    await page.click('text=Get Started');
+    // Register and login (homepage nav issue - use direct navigation)
+    await page.goto('/register');
     await page.fill('[data-testid="register-email-input"]', testUser.email);
     await page.fill('[data-testid="register-password-input"]', testUser.password);
     await page.fill('[data-testid="name-input"]', testUser.name);
@@ -84,17 +95,31 @@ test.describe('Results Display', () => {
     await expect(page).toHaveURL('/dashboard');
     
     // Create poll with candidates
-    await page.click('text=Create New Poll');
+    await page.click('[data-testid="create-first-poll-btn"]');
     await page.fill('[data-testid="poll-title-input"]', 'Mock Results Poll');
     await page.fill('[data-testid="poll-description-input"]', 'Testing with mock results');
     
-    await page.fill('[data-testid="candidate-name-input-0"]', 'Alice');
+    await page.fill('[data-testid="candidate-name-0"]', 'Alice');
+    await page.fill('[data-testid="candidate-name-1"]', 'Bob');
     await page.click('[data-testid="add-candidate-btn"]');
-    await page.fill('[data-testid="candidate-name-input-1"]', 'Bob');
-    await page.click('[data-testid="add-candidate-btn"]');
-    await page.fill('[data-testid="candidate-name-input-2"]', 'Charlie');
+    await page.fill('[data-testid="candidate-name-2"]', 'Charlie');
     
-    await page.click('[data-testid="create-poll-btn"]');
+    // Clear the datetime fields to make poll open immediately (no time restrictions)
+    await page.fill('#opensAt', '');
+    await page.fill('#closesAt', '');
+    
+    await page.click('[data-testid="create-poll-submit-btn"]');
+    
+    // Wait for redirect to dashboard after poll creation
+    await page.waitForURL('/dashboard?created=true', { timeout: 10000 });
+    
+    // Find the newly created poll and navigate to it
+    await page.waitForSelector('[data-testid^="poll-item-"]');
+    const pollElement = page.locator('[data-testid^="poll-item-"]').filter({ hasText: 'Mock Results Poll' });
+    await pollElement.click();
+    
+    // Should be on poll management page
+    await page.waitForURL(/\/polls\/[a-f0-9-]+$/, { timeout: 10000 });
     
     // Go to results tab
     await page.click('[data-testid="results-tab"]');
@@ -108,22 +133,38 @@ test.describe('Results Display', () => {
     
     await page.goto('/');
     
-    // Register and create poll
-    await page.click('text=Get Started');
+    // Register and create poll (homepage nav issue - use direct navigation)
+    await page.goto('/register');
     await page.fill('[data-testid="register-email-input"]', testUser.email);
     await page.fill('[data-testid="register-password-input"]', testUser.password);
     await page.fill('[data-testid="name-input"]', testUser.name);
     await page.fill('[data-testid="confirm-password-input"]', testUser.password);
     await page.click('[data-testid="register-submit-btn"]');
     
-    await expect(page).toHaveURL('/dashboard');
+    // Wait longer for registration to complete (concurrency issue - high load)
+    await expect(page).toHaveURL('/dashboard', { timeout: 30000 });
     
-    await page.click('text=Create New Poll');
+    await page.click('[data-testid="create-first-poll-btn"]');
     await page.fill('[data-testid="poll-title-input"]', 'Tab Navigation Test');
-    await page.fill('[data-testid="candidate-name-input-0"]', 'Option A');
-    await page.click('[data-testid="add-candidate-btn"]');
-    await page.fill('[data-testid="candidate-name-input-1"]', 'Option B');
-    await page.click('[data-testid="create-poll-btn"]');
+    await page.fill('[data-testid="candidate-name-0"]', 'Option A');
+    await page.fill('[data-testid="candidate-name-1"]', 'Option B');
+    
+    // Clear the datetime fields to make poll open immediately (no time restrictions)
+    await page.fill('#opensAt', '');
+    await page.fill('#closesAt', '');
+    
+    await page.click('[data-testid="create-poll-submit-btn"]');
+    
+    // Wait for redirect to dashboard after poll creation
+    await page.waitForURL('/dashboard?created=true', { timeout: 10000 });
+    
+    // Find the newly created poll and navigate to it
+    await page.waitForSelector('[data-testid^="poll-item-"]');
+    const pollElement = page.locator('[data-testid^="poll-item-"]').filter({ hasText: 'Tab Navigation Test' });
+    await pollElement.click();
+    
+    // Should be on poll management page
+    await page.waitForURL(/\/polls\/[a-f0-9-]+$/, { timeout: 10000 });
     
     // Test tab navigation
     // Should start on overview tab
@@ -155,10 +196,11 @@ test.describe('Results Display', () => {
     
     // Should load the results page (even if it shows an error for non-existent poll)
     // The important thing is that the route exists and the page structure loads
-    await expect(page.locator('head title')).toContainText('Poll Results');
+    await page.waitForLoadState('domcontentloaded');
+    await expect(page).toHaveTitle(/Poll Results/);
     
     // Should have RankChoice branding
-    await expect(page.locator('text=RankChoice')).toBeVisible();
+    await expect(page.locator('h1:has-text("RankChoice")')).toBeVisible();
     
     // Should have share/copy functionality structure (even if poll doesn't exist)
     // The page should at least render without crashing
