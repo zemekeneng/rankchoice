@@ -1,16 +1,29 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Results Display', () => {
+  // Function to generate unique test data for each test to avoid collisions
+  function generateTestUser(testPrefix: string = 'results') {
+    const timestamp = Date.now();
+    const randomId = Math.random().toString(36).substring(7);
+    return {
+      email: `${testPrefix}-test-${timestamp}-${randomId}@example.com`,
+      password: 'Test123!',
+      name: `${testPrefix.charAt(0).toUpperCase()}${testPrefix.slice(1)} Test User`
+    };
+  }
   
   test('should display results tab in poll management page', async ({ page }) => {
+    const testUser = generateTestUser('results-tab');
+    
     // Go to the homepage
     await page.goto('/');
     
     // Register a new user
     await page.click('text=Get Started');
-    await page.fill('[data-testid="register-email-input"]', 'resultstest@example.com');
-    await page.fill('[data-testid="register-password-input"]', 'testpassword123');
-    await page.fill('[data-testid="register-name-input"]', 'Results Test User');
+    await page.fill('[data-testid="register-email-input"]', testUser.email);
+    await page.fill('[data-testid="register-password-input"]', testUser.password);
+    await page.fill('[data-testid="name-input"]', testUser.name);
+    await page.fill('[data-testid="confirm-password-input"]', testUser.password);
     await page.click('[data-testid="register-submit-btn"]');
     
     // Wait for redirect to dashboard
@@ -53,6 +66,8 @@ test.describe('Results Display', () => {
   });
 
   test('should display results with mock votes', async ({ page }) => {
+    const testUser = generateTestUser('results-mock');
+    
     // This test would need mock data or a way to create votes
     // For now, we'll test the results page structure
     
@@ -60,9 +75,10 @@ test.describe('Results Display', () => {
     
     // Register and login
     await page.click('text=Get Started');
-    await page.fill('[data-testid="register-email-input"]', 'resultsmock@example.com');
-    await page.fill('[data-testid="register-password-input"]', 'testpassword123');
-    await page.fill('[data-testid="register-name-input"]', 'Results Mock User');
+    await page.fill('[data-testid="register-email-input"]', testUser.email);
+    await page.fill('[data-testid="register-password-input"]', testUser.password);
+    await page.fill('[data-testid="name-input"]', testUser.name);
+    await page.fill('[data-testid="confirm-password-input"]', testUser.password);
     await page.click('[data-testid="register-submit-btn"]');
     
     await expect(page).toHaveURL('/dashboard');
@@ -88,13 +104,16 @@ test.describe('Results Display', () => {
   });
 
   test('should navigate between tabs correctly', async ({ page }) => {
+    const testUser = generateTestUser('results-tabs');
+    
     await page.goto('/');
     
     // Register and create poll
     await page.click('text=Get Started');
-    await page.fill('[data-testid="register-email-input"]', 'tabtest@example.com');
-    await page.fill('[data-testid="register-password-input"]', 'testpassword123');
-    await page.fill('[data-testid="register-name-input"]', 'Tab Test User');
+    await page.fill('[data-testid="register-email-input"]', testUser.email);
+    await page.fill('[data-testid="register-password-input"]', testUser.password);
+    await page.fill('[data-testid="name-input"]', testUser.name);
+    await page.fill('[data-testid="confirm-password-input"]', testUser.password);
     await page.click('[data-testid="register-submit-btn"]');
     
     await expect(page).toHaveURL('/dashboard');

@@ -153,6 +153,49 @@ class APIClient {
 		return this.mapPollFromApi(response.data!);
 	}
 
+	async getPublicPoll(id: string): Promise<Poll> {
+		const response = await this.request<any>(`/public/polls/${id}`);
+		
+		return this.mapPollFromApi(response.data!);
+	}
+
+	async submitAnonymousVote(pollId: string, rankings: Array<{ candidateId: string; rank: number }>): Promise<{
+		ballot: {
+			id: string;
+			submitted_at: string;
+		};
+		receipt: {
+			receipt_code: string;
+			verification_url: string;
+		};
+	}> {
+		const requestBody = {
+			rankings: rankings.map(r => ({
+				candidate_id: r.candidateId,
+				rank: r.rank
+			}))
+		};
+
+		const response = await this.request<{
+			ballot: {
+				id: string;
+				submitted_at: string;
+			};
+			receipt: {
+				receipt_code: string;
+				verification_url: string;
+			};
+		}>(`/public/polls/${pollId}/vote`, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify(requestBody),
+		});
+		
+		return response.data!;
+	}
+
 	private mapPollFromApi(poll: any): Poll {
 		return {
 			id: poll.id,
@@ -179,9 +222,22 @@ class APIClient {
 	}
 
 	async createPoll(pollData: CreatePollForm): Promise<Poll> {
+		// Map camelCase frontend fields to snake_case backend fields
+		const backendPollData = {
+			title: pollData.title,
+			description: pollData.description,
+			poll_type: pollData.pollType, // camelCase -> snake_case
+			num_winners: pollData.numWinners, // camelCase -> snake_case
+			opens_at: pollData.opensAt,
+			closes_at: pollData.closesAt,
+			is_public: pollData.isPublic, // camelCase -> snake_case ⭐ THIS WAS THE ISSUE!
+			registration_required: pollData.registrationRequired, // camelCase -> snake_case
+			candidates: pollData.candidates
+		};
+
 		const response = await this.request<any>('/polls', {
 			method: 'POST',
-			body: JSON.stringify(pollData)
+			body: JSON.stringify(backendPollData)
 		});
 		
 		return this.mapPollFromApi(response.data!);
@@ -326,6 +382,35 @@ class APIClient {
 			total_ballots: number;
 			exhausted_ballots: number;
 		}>(`/polls/${pollId}/results/rounds`);
+		return response.data!;
+	}
+
+	async getAnonymousBallots(pollId: string): Promise<{
+		poll_id: string;
+		poll_title: string;
+		total_ballots: number;
+		ballots: Array<{
+			ballot_id: string;
+			submitted_at: string;
+			rankings: Array<{
+				candidate_name: string;
+				rank: number;
+			}>;
+		}>;
+	}> {
+		const response = await this.request<{
+			poll_id: string;
+			poll_title: string;
+			total_ballots: number;
+			ballots: Array<{
+				ballot_id: string;
+				submitted_at: string;
+				rankings: Array<{
+					candidate_name: string;
+					rank: number;
+				}>;
+			}>;
+		}>(`/polls/${pollId}/ballots/anonymous`);
 		return response.data!;
 	}
 

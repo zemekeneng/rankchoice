@@ -134,11 +134,8 @@ class AuthStore {
 				refreshToken: response.refreshToken
 			});
 
-			// Small delay to ensure auth state is fully propagated before navigation
-			await new Promise(resolve => setTimeout(resolve, 50));
-
-			// Redirect to dashboard after successful login with robust navigation
-			await this.navigateToDestination('/dashboard');
+			// Redirect to dashboard after successful login
+			await goto('/dashboard', { invalidateAll: true });
 		} catch (error) {
 			if (error instanceof APIError) {
 				this.error = error.message;
@@ -163,11 +160,8 @@ class AuthStore {
 				refreshToken: response.refreshToken
 			});
 
-			// Small delay to ensure auth state is fully propagated before navigation
-			await new Promise(resolve => setTimeout(resolve, 50));
-
-			// Redirect to dashboard after successful registration with robust navigation
-			await this.navigateToDestination('/dashboard');
+			// Redirect to dashboard after successful registration
+			await goto('/dashboard', { invalidateAll: true });
 		} catch (error) {
 			if (error instanceof APIError) {
 				this.error = error.message;
@@ -192,8 +186,8 @@ class AuthStore {
 		// Clear storage
 		this.clearStorage();
 
-		// Redirect to home page with robust navigation
-		await this.navigateToDestination('/');
+		// Redirect to home page
+		await goto('/', { invalidateAll: true });
 	}
 
 	async refreshTokens(): Promise<void> {
@@ -233,45 +227,6 @@ class AuthStore {
 	// Clear any error messages
 	clearError(): void {
 		this.error = null;
-	}
-
-	// Robust navigation method for high-load parallel execution
-	private async navigateToDestination(destination: string, maxRetries: number = 5): Promise<void> {
-		let retries = 0;
-		
-		while (retries < maxRetries) {
-			try {
-				// Progressive delay to prevent race conditions in parallel execution
-				if (retries > 0) {
-					const delay = Math.min(200 + (retries * 100), 500); // Cap at 500ms
-					await new Promise(resolve => setTimeout(resolve, delay));
-				}
-				
-				// Attempt navigation with explicit options
-				await goto(destination, { 
-					replaceState: false,
-					keepFocus: false,
-					invalidateAll: true
-				});
-				
-				// Give navigation time to complete
-				if (browser) {
-					await new Promise(resolve => setTimeout(resolve, 100)); // Wait for navigation
-				}
-				
-				return; // Success
-			} catch (error) {
-				retries++;
-				console.warn(`Navigation attempt ${retries}/${maxRetries} to ${destination} failed:`, error);
-				
-				if (retries >= maxRetries) {
-					// Final attempt failed - log but don't block auth flow
-					console.error(`Failed to navigate to ${destination} after ${maxRetries} attempts:`, error);
-					// Auth operation succeeded, navigation failed - tests will handle this
-					return;
-				}
-			}
-		}
 	}
 
 	// Check if user has specific role

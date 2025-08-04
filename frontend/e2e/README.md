@@ -2,85 +2,87 @@
 
 This directory contains comprehensive Playwright E2E tests that verify the complete user flows of the RankChoice application.
 
-## Test Files
+**🚨 CRITICAL RULE: ALL TESTS MUST PASS - No exceptions. See `E2E_TESTING_SPECIFICATION.md` for complete requirements.**
+
+## Test Files (Master Test Suite)
 
 ### `auth.test.ts`
-Tests authentication functionality:
-- User registration and login
-- Form validation
-- Route protection
-- Session persistence
-- Logout functionality
+**Authentication Flow** - Comprehensive user authentication testing:
+- User registration with all required fields (name, email, password, confirmPassword)
+- User login with existing credentials  
+- Invalid credentials handling and error display
+- Route protection (unauthenticated users redirected to login)
+- Logout functionality and session cleanup
+- Navigation links visibility based on authentication state
 
-### `polls.test.ts`
-Tests poll creation and management:
-- Poll creation (single-winner and multi-winner)
-- Form validation
-- Candidate management (add, remove, reorder)
-- Poll preview functionality
-- Dashboard display
-- Date formatting
-- Data persistence
+### `homepage.test.ts`
+**Homepage/Landing Page** - Landing page functionality and navigation:
+- Hero section display with correct content and messaging
+- Features section with all 6 features properly displayed
+- "How it Works" section display and content
+- Authentication-aware UI (different buttons for logged in/out users)
+- Navigation flows from homepage buttons (Get Started, Sign In, Dashboard)
+- Responsive design validation on mobile viewports
+- Cross-page navigation consistency
 
-### `integration.test.ts`
-Tests complete user journeys:
-- Full registration → login → poll creation → dashboard flow
-- Multiple poll creation
-- Session persistence across login/logout
-- Error handling and recovery
+### `polls.test.ts`  
+**Poll Creation and Management** - Complete poll lifecycle management:
+- Empty state display for new users
+- Single-winner poll creation with full validation
+- Multi-winner poll creation with number of winners
+- Form validation errors and proper error handling
+- Candidate management (add, remove, reorder candidates)
+- Poll preview functionality before creation
+- Dashboard display and data persistence after refresh
+- Date formatting verification (no "Invalid Date" errors)
 
 ### `voters.test.ts`
-Tests voter management and statistics:
-- Adding voters to polls
-- Voter status tracking (invited/voted/pending)
-- Voter statistics display
-- Ballot token generation
-- Comprehensive voter management workflows
+**Voter Management** - Voter invitation and statistics tracking:
+- Adding voters to polls via email
+- Voter statistics display (total voters, voted count, pending count)
+- Voting token generation and shareable links
+- Voter status tracking across different states
+- Statistics accuracy and real-time updates
+- Empty state and edge case handling
 
-### `voter-stats-fix.test.ts` & `voter-stats-simple.test.ts`
-Tests for specific voter statistics bug fixes:
-- Proper display of voter counts and statistics
-- Backend/frontend data format consistency
-- Bug regression prevention
-
-### `homepage.test.ts` ⭐ **NEW**
-Tests homepage and landing page functionality:
-- Hero section with authentication-aware content
-- Features section display and navigation
-- Call-to-action buttons and flows
-- How it works section
-- Responsive design on mobile
-- Navigation between authenticated/unauthenticated states
-
-### `voting-interface.test.ts` ⭐ **NEW**
-Tests comprehensive voting interface and drag-and-drop ranking:
-- Voting interface display and poll information
+### `voting-interface.test.ts`
+**Voting Interface** - Complete voting experience:
+- Voting interface display and poll information presentation
 - Drag-and-drop candidate ranking functionality
-- Rank/unrank candidate buttons
-- Ballot submission and validation
-- Voting receipt display and verification
-- Double-voting prevention
-- Error handling for invalid tokens
+- Rank/unrank candidate buttons and interactions
+- Ballot submission and validation processes
+- Voting receipt display and verification codes
+- Double-voting prevention and security
+- Error handling for invalid tokens and edge cases
 - Mobile viewport compatibility
-- Loading states and empty states
+- Loading states and empty state handling
 
-### `complete-workflow.test.ts` ⭐ **NEW**
-Tests complete end-to-end poll workflow:
-- Full lifecycle: Registration → Poll Creation → Voter Management → Voting → Results
-- Multi-voter simulation with different preferences
-- Results verification after voting
-- Creator and voter perspective testing
-- Cross-session persistence and authentication
-- Error handling throughout the workflow
+### `public-voting.test.ts`
+**Public/Anonymous Voting** - Anonymous voting through public poll links:
+- Public poll creation with `is_public: true` flag
+- Public poll accessibility without authentication requirement
+- Anonymous ballot submission through public interface
+- Vote counting integration with creator dashboard
+- Public poll data loading and display verification
+- Anonymous vote receipt generation and validation
 
-### `enhanced-forms.test.ts` ⭐ **NEW**
-Tests enhanced form features and interactions:
-- Form actions (cancel, preview, submit)
-- Error handling and validation states
-- Loading states and accessibility
-- Poll type selection (single/multi-winner)
-- Candidate management with dynamic inputs
-- Form state management and navigation
+### `results-display.test.ts`
+**Results Display** - Poll results calculation and visualization:
+- Results display accuracy after voting completion
+- RCV (Ranked Choice Voting) algorithm calculation correctness
+- Vote count and percentage display formatting
+- Winner determination and announcement
+- Results visualization components and charts
+- Real-time results updates as votes are submitted
+
+### `complete-workflow.test.ts`
+**Complete Workflow Integration** - End-to-end poll lifecycle:
+- Full user journey: Registration → Poll Creation → Voter Addition → Voting → Results
+- Multi-voter simulation with different voting preferences
+- Cross-session persistence and authentication state management
+- Error handling and recovery throughout the entire workflow
+- Data consistency verification across all phases
+- Creator and voter perspective integration testing
 
 ## Test ID Coverage
 
@@ -101,12 +103,14 @@ All tests now use comprehensive `data-testid` attributes for reliable element ta
 - `data-testid="login-submit-btn"` - Login submit button
 - `data-testid="login-error"` - Login error message
 - `data-testid="register-heading"` - Registration page heading
-- `data-testid="name-input"` - Registration name input
-- `data-testid="register-email-input"` - Registration email input
-- `data-testid="register-password-input"` - Registration password input
-- `data-testid="confirm-password-input"` - Confirm password input
+- `data-testid="name-input"` - Registration name input ⚠️ **REQUIRED**
+- `data-testid="register-email-input"` - Registration email input ⚠️ **REQUIRED**
+- `data-testid="register-password-input"` - Registration password input ⚠️ **REQUIRED**
+- `data-testid="confirm-password-input"` - Confirm password input ⚠️ **REQUIRED**
 - `data-testid="register-submit-btn"` - Registration submit button
 - `data-testid="register-error"` - Registration error message
+
+> **🚨 CRITICAL:** Registration form requires ALL 4 fields: name, email, password, AND confirmPassword. Many E2E test failures are caused by missing the `confirm-password-input` field!
 
 ### **Homepage/Landing Page**
 - `data-testid="hero-section"` - Hero section container
@@ -161,6 +165,41 @@ All tests now use comprehensive `data-testid` attributes for reliable element ta
 - `data-testid="voters-pending-stat"` - Detailed pending count stat
 - `data-testid="voter-email-input"` - Add voter email input
 - `data-testid="add-voter-btn"` - Add voter button
+
+## Common E2E Test Patterns & Best Practices
+
+### 🚨 **Registration Form - ALWAYS Use All 4 Fields**
+
+**CORRECT Pattern:**
+```typescript
+await page.fill('[data-testid="name-input"]', testUser.name);
+await page.fill('[data-testid="register-email-input"]', testUser.email);
+await page.fill('[data-testid="register-password-input"]', testUser.password);
+await page.fill('[data-testid="confirm-password-input"]', testUser.password); // DON'T FORGET!
+await page.click('[data-testid="register-submit-btn"]');
+```
+
+**❌ WRONG Pattern (Missing confirm password):**
+```typescript
+await page.fill('[data-testid="register-email-input"]', testUser.email);
+await page.fill('[data-testid="register-password-input"]', testUser.password);
+// Missing confirm-password-input - WILL FAIL!
+await page.click('[data-testid="register-submit-btn"]');
+```
+
+### 📝 **Public Voting Flow Pattern**
+```typescript
+// Create poll with public voting enabled
+await page.check('[data-testid="poll-public-checkbox"]');
+
+// Get public voting URL and test in incognito context
+const anonymousContext = await context.browser()?.newContext();
+const anonymousPage = await anonymousContext.newPage();
+await anonymousPage.goto(publicVotingUrl);
+```
+
+### ⚡ **Form Field Order Matters**
+Always fill form fields in the order they appear on the page to avoid race conditions and focus issues.
 
 ## Running Tests
 
@@ -316,9 +355,9 @@ Tests are designed to run in CI environments:
 
 ## Coverage Summary
 
-### ✅ **Comprehensive E2E Test Coverage (60+ Tests)**
+### ✅ **Comprehensive E2E Test Coverage (8 Test Files)**
 
-**Authentication & Navigation** (6 tests):
+**Authentication Flow** (`auth.test.ts`):
 - ✅ User registration with form validation
 - ✅ User login with existing credentials
 - ✅ Invalid credentials error handling
@@ -326,7 +365,7 @@ Tests are designed to run in CI environments:
 - ✅ Logout functionality and session cleanup
 - ✅ Navigation between pages
 
-**Homepage & Landing Page** (11 tests):
+**Homepage & Landing Page** (`homepage.test.ts`):
 - ✅ Hero section display and navigation
 - ✅ Features section with all 6 features
 - ✅ How it works section
@@ -335,7 +374,7 @@ Tests are designed to run in CI environments:
 - ✅ Responsive design (mobile/desktop)
 - ✅ Cross-page navigation
 
-**Poll Creation & Management** (15+ tests):
+**Poll Creation & Management** (`polls.test.ts`):
 - ✅ Empty state display for new users
 - ✅ Single-winner and multi-winner poll creation
 - ✅ Form validation (title, candidates, poll type)
@@ -345,7 +384,7 @@ Tests are designed to run in CI environments:
 - ✅ Dashboard display and management
 - ✅ Data persistence and state management
 
-**Voting Interface** (12 tests):
+**Voting Interface** (`voting-interface.test.ts`):
 - ✅ Complete voting interface display
 - ✅ Drag-and-drop ranking functionality
 - ✅ Rank/unrank candidate interactions
@@ -356,14 +395,26 @@ Tests are designed to run in CI environments:
 - ✅ Mobile viewport compatibility
 - ✅ Empty state handling
 
-**Voter Management** (8+ tests):
+**Voter Management** (`voters.test.ts`):
 - ✅ Adding voters and statistics tracking
 - ✅ Voter status updates (invited/voted/pending)
 - ✅ Statistics display validation
 - ✅ Bug fix regression testing
 - ✅ Cross-tab statistics consistency
 
-**Complete Workflows** (6+ tests):
+**Public/Anonymous Voting** (`public-voting.test.ts`):
+- ✅ Public poll creation and accessibility
+- ✅ Anonymous ballot submission through public interface
+- ✅ Vote counting integration with creator dashboard
+- ✅ Public poll data loading and verification
+
+**Results Display** (`results-display.test.ts`):
+- ✅ Results display accuracy and RCV calculation
+- ✅ Vote count and percentage formatting
+- ✅ Winner determination and visualization
+- ✅ Real-time results updates
+
+**Complete Workflow Integration** (`complete-workflow.test.ts`):
 - ✅ Full poll lifecycle (creation → voting → results)
 - ✅ Multi-user voting simulation
 - ✅ Cross-session persistence testing
@@ -371,11 +422,13 @@ Tests are designed to run in CI environments:
 - ✅ Error handling throughout workflow
 - ✅ Authentication state management
 
-**Integration Tests** (2 tests):
-- ✅ Complete 20-step user journey
-- ✅ Multiple poll creation with persistence
+**Complete Workflow Integration Tests**:
+- ✅ Full end-to-end poll lifecycle with multi-user simulation
+- ✅ Cross-session persistence and authentication management
 
-### **Total Coverage**: 60+ comprehensive E2E tests covering all user flows
+### **Total Coverage**: 8 comprehensive test files covering all user flows
+
+**Each test file covers ONE specific flow completely - no redundancy, no gaps.**
 
 ## Benefits
 

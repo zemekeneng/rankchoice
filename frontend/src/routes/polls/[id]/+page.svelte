@@ -24,11 +24,28 @@
 	let voterFormData = $state<CreateVoterRequest>({ email: '' });
 	let addingVoter = $state(false);
 	let voterError = $state<string | null>(null);
+	let showUpdateSuccess = $state(false);
 
 	// Redirect if not authenticated (wait for auth to load first)
 	$effect(() => {
 		if (!authStore.isLoading && !authStore.isAuthenticated) {
 			goto('/login');
+		}
+	});
+
+	// Check for update success message and clean URL
+	$effect(() => {
+		if ($page.url.searchParams.get('updated') === 'true') {
+			showUpdateSuccess = true;
+			// Clean URL after showing success
+			const url = new URL($page.url);
+			url.searchParams.delete('updated');
+			goto(url.pathname + url.search, { replaceState: true });
+			
+			// Hide success message after 5 seconds
+			setTimeout(() => {
+				showUpdateSuccess = false;
+			}, 5000);
 		}
 	});
 
@@ -223,90 +240,133 @@
 		}
 	}
 
+	// Share public poll
+	async function sharePublicPoll() {
+		if (!poll) return;
+
+		if (!poll.isPublic) {
+			alert('This poll is not public. Make it public first to share on social media.');
+			return;
+		}
+
+		const publicUrl = `${window.location.origin}/public/poll/${poll.id}`;
+		const shareData = {
+			title: `Vote in: ${poll.title}`,
+			text: poll.description || `Cast your vote in this ranked choice poll: ${poll.title}`,
+			url: publicUrl
+		};
+
+		try {
+			if (navigator.share) {
+				await navigator.share(shareData);
+			} else {
+				// Fallback: copy to clipboard
+				await navigator.clipboard.writeText(publicUrl);
+				alert('Public poll link copied to clipboard!');
+			}
+		} catch (err) {
+			console.error('Error sharing:', err);
+			// Fallback: copy to clipboard
+			try {
+				await navigator.clipboard.writeText(publicUrl);
+				alert('Public poll link copied to clipboard!');
+			} catch (clipboardErr) {
+				console.error('Clipboard error:', clipboardErr);
+				alert('Unable to share or copy link. Please copy the URL manually.');
+			}
+		}
+	}
+
 	// Export functions
-	function exportToCSV() {
-		if (!results || !poll) return;
+	async function exportToCSV() {
+		if (!poll) return;
 
-		const csvData = [];
-		
-		// Header
-		csvData.push(['Poll Title', poll.title]);
-		csvData.push(['Total Votes', results.totalVotes.toString()]);
-		csvData.push(['Poll Type', poll.pollType === 'single_winner' ? 'Single Winner' : `${poll.numWinners} Winners`]);
-		csvData.push(['Export Date', new Date().toISOString()]);
-		csvData.push([]); // Empty row
-
-		// Winner
-		if (results.winner) {
-			csvData.push(['Winner', results.winner.name, `${results.winner.finalVotes} votes`, `${results.winner.percentage.toFixed(1)}%`]);
-			csvData.push([]); // Empty row
-		}
-
-		// Final Rankings
-		csvData.push(['Final Rankings']);
-		csvData.push(['Position', 'Candidate', 'Votes', 'Percentage', 'Eliminated Round']);
-		results.finalRankings.forEach(ranking => {
-			csvData.push([
-				ranking.position.toString(),
-				ranking.name,
-				ranking.votes.toString(),
-				`${ranking.percentage.toFixed(1)}%`,
-				ranking.eliminatedRound?.toString() || 'N/A'
-			]);
-		});
-
-		// RCV Rounds
-		if (rounds.length > 0) {
-			csvData.push([]); // Empty row
-			csvData.push(['RCV Rounds']);
+		try {
+			// Get anonymous ballot data
+			const ballotData = await apiClient.getAnonymousBallots(poll.id);
 			
-			// Round headers
-			const roundHeaders = ['Round', ...candidates.map(c => c.name), 'Eliminated', 'Winner'];
-			csvData.push(roundHeaders);
+			const csvData = [];
 			
-			rounds.forEach(round => {
-				const rowData = [
-					round.roundNumber.toString(),
-					...candidates.map(c => (round.voteCounts[c.id] || 0).toString()),
-					round.eliminated ? candidates.find(c => c.id === round.eliminated)?.name || '' : '',
-					round.winner ? candidates.find(c => c.id === round.winner)?.name || '' : ''
+			// Header
+			csvData.push(['Poll Title', poll.title]);
+			csvData.push(['Total Ballots', ballotData.total_ballots.toString()]);
+			csvData.push(['Poll Type', poll.pollType === 'single_winner' ? 'Single Winner' : `${poll.numWinners} Winners`]);
+			csvData.push(['Export Date', new Date().toISOString()]);
+			csvData.push([]); // Empty row
+			
+			// Anonymous Ballot Data
+			csvData.push(['Anonymous Ballot Records']);
+			csvData.push(['Ballot ID', 'Submitted At', 'Rank 1', 'Rank 2', 'Rank 3', 'Rank 4', 'Rank 5', 'Additional Rankings...']);
+			
+			ballotData.ballots.forEach(ballot => {
+				const row = [
+					ballot.ballot_id,
+					new Date(ballot.submitted_at).toLocaleString(),
 				];
-				csvData.push(rowData);
+				
+				// Add rankings in order (fill empty ranks with blank)
+				const maxRanks = Math.max(5, ballot.rankings.length);
+				for (let rank = 1; rank <= maxRanks; rank++) {
+					const ranking = ballot.rankings.find(r => r.rank === rank);
+					row.push(ranking ? ranking.candidate_name : '');
+				}
+				
+				csvData.push(row);
 			});
+
+			// Summary Data
+			if (results) {
+				csvData.push([]); // Empty row
+				csvData.push(['Summary Results']);
+				csvData.push(['Winner', results.winner?.name || 'No winner yet']);
+				csvData.push(['Total Votes Counted', results.totalVotes.toString()]);
+				
+				csvData.push([]); // Empty row
+				csvData.push(['Final Rankings']);
+				csvData.push(['Position', 'Candidate', 'Final Votes', 'Percentage']);
+				results.finalRankings.forEach(ranking => {
+					csvData.push([
+						ranking.position.toString(),
+						ranking.name,
+						ranking.votes.toString(),
+						`${ranking.percentage.toFixed(1)}%`
+					]);
+				});
+			}
+
+			// Convert to CSV string
+			const csvString = csvData.map(row => 
+				row.map(cell => 
+					typeof cell === 'string' && cell.includes(',') ? `"${cell}"` : cell
+				).join(',')
+			).join('\n');
+
+			// Download
+			const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+			const link = document.createElement('a');
+			const url = URL.createObjectURL(blob);
+			link.setAttribute('href', url);
+			link.setAttribute('download', `${poll.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_anonymous_ballots.csv`);
+			link.style.visibility = 'hidden';
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+		} catch (error) {
+			console.error('Error exporting CSV:', error);
+			alert('Failed to export CSV. Please try again.');
 		}
-
-		// Convert to CSV string
-		const csvString = csvData.map(row => 
-			row.map(cell => 
-				typeof cell === 'string' && cell.includes(',') ? `"${cell}"` : cell
-			).join(',')
-		).join('\n');
-
-		// Download
-		const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
-		const link = document.createElement('a');
-		const url = URL.createObjectURL(blob);
-		link.setAttribute('href', url);
-		link.setAttribute('download', `${poll.title.replace(/[^a-z0-9]/gi, '_')}_results.csv`);
-		link.style.visibility = 'hidden';
-		document.body.appendChild(link);
-		link.click();
-		document.body.removeChild(link);
 	}
 
 	function exportToPDF() {
 		if (!poll) return;
 		
-		// Open results page in new window for printing/PDF
-		const resultsUrl = `${window.location.origin}/polls/${poll.id}/results`;
-		const printWindow = window.open(resultsUrl, '_blank');
+		// Open detailed print page in new window for PDF generation
+		const printUrl = `${window.location.origin}/polls/${poll.id}/print`;
+		const printWindow = window.open(printUrl, '_blank', 'width=1200,height=800');
 		
 		if (printWindow) {
-			printWindow.onload = () => {
-				setTimeout(() => {
-					printWindow.print();
-				}, 1000);
-			};
+			// The print page will auto-print when loaded
+			printWindow.focus();
 		}
 	}
 
@@ -358,6 +418,36 @@
 			</div>
 		</div>
 	{:else if poll}
+		<!-- Success Message -->
+		{#if showUpdateSuccess}
+			<div class="mb-6 bg-green-50 border border-green-200 rounded-md p-4">
+				<div class="flex">
+					<div class="flex-shrink-0">
+						<svg class="h-5 w-5 text-green-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+							<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+						</svg>
+					</div>
+					<div class="ml-3">
+						<h3 class="text-sm font-medium text-green-800">Poll Updated Successfully!</h3>
+						<p class="mt-1 text-sm text-green-600">Your poll settings and candidates have been updated.</p>
+					</div>
+					<div class="ml-auto pl-3">
+						<div class="-mx-1.5 -my-1.5">
+							<button
+								onclick={() => showUpdateSuccess = false}
+								class="inline-flex bg-green-50 rounded-md p-1.5 text-green-500 hover:bg-green-100"
+								aria-label="Dismiss success message"
+							>
+								<svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+									<path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+								</svg>
+							</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		{/if}
+
 		<!-- Header -->
 		<div class="mb-8">
 			<div class="flex items-center mb-4">
@@ -577,6 +667,18 @@
 				<div class="bg-white shadow rounded-lg p-6">
 					<h3 class="text-lg font-medium text-gray-900 mb-4">Quick Actions</h3>
 					<div class="space-y-3">
+						<button
+							onclick={sharePublicPoll}
+							class="w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm bg-blue-600 text-sm font-medium text-white hover:bg-blue-700"
+							class:bg-gray-400={!poll?.isPublic}
+							class:hover:bg-gray-500={!poll?.isPublic}
+							class:cursor-not-allowed={!poll?.isPublic}
+						>
+							<svg class="h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
+							</svg>
+							{poll?.isPublic ? 'Share Public Poll' : 'Poll Not Public'}
+						</button>
 						<button
 							onclick={copyVotingLink}
 							class="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"

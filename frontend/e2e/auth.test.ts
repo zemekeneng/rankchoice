@@ -1,15 +1,16 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Authentication Flow', () => {
-  // Generate unique test data for each test run to avoid conflicts
-  const timestamp = Date.now();
-  const randomId = Math.random().toString(36).substring(7);
-  
-  const testUser = {
-    email: `e2e-test-${timestamp}-${randomId}@example.com`,
-    password: 'Test123!',
-    name: 'E2E Test User'
-  };
+  // Function to generate unique test data for each test to avoid collisions
+  function generateTestUser(testPrefix: string = 'auth') {
+    const timestamp = Date.now();
+    const randomId = Math.random().toString(36).substring(7);
+    return {
+      email: `${testPrefix}-${timestamp}-${randomId}@example.com`,
+      password: 'Test123!',
+      name: `${testPrefix.charAt(0).toUpperCase()}${testPrefix.slice(1)} Test User`
+    };
+  }
 
   test.beforeEach(async ({ page }) => {
     // Start with a clean slate - go to home page
@@ -23,6 +24,8 @@ test.describe('Authentication Flow', () => {
   });
 
   test('should register a new user successfully', async ({ page }) => {
+    const testUser = generateTestUser('register');
+    
     // Go to register page
     await page.click('[data-testid="register-link"]');
     await expect(page).toHaveURL('/register');
@@ -43,11 +46,7 @@ test.describe('Authentication Flow', () => {
 
   test('should login with existing user credentials', async ({ page }) => {
     // Create a unique user for this test
-    const loginTestUser = {
-      email: `login-test-${Date.now()}-${Math.random().toString(36).substring(7)}@example.com`,
-      password: 'Test123!',
-      name: 'Login Test User'
-    };
+    const loginTestUser = generateTestUser('login');
 
     // First register a user
     await page.goto('/register');
@@ -115,11 +114,7 @@ test.describe('Authentication Flow', () => {
 
   test('should logout successfully', async ({ page }) => {
     // Create a unique user for this test
-    const logoutTestUser = {
-      email: `logout-test-${Date.now()}-${Math.random().toString(36).substring(7)}@example.com`,
-      password: 'Test123!',
-      name: 'Logout Test User'
-    };
+    const logoutTestUser = generateTestUser('logout');
 
     // First register and login
     await page.goto('/register');

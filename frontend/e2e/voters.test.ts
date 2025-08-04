@@ -1,19 +1,26 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Voter Management and Statistics', () => {
-  // Generate unique test user for each test run
-  const timestamp = Date.now();
-  const randomId = Math.random().toString(36).substring(2, 8);
-  const testUser = {
-    email: `voters-test-${timestamp}-${randomId}@example.com`,
-    password: 'Test123!',
-    name: 'Voters Test User'
-  };
+  // Function to generate unique test data for each test to avoid collisions
+  function generateTestUser(testPrefix: string = 'voters') {
+    const timestamp = Date.now();
+    const randomId = Math.random().toString(36).substring(2, 8);
+    return {
+      email: `${testPrefix}-test-${timestamp}-${randomId}@example.com`,
+      password: 'Test123!',
+      name: `${testPrefix.charAt(0).toUpperCase()}${testPrefix.slice(1)} Test User`
+    };
+  }
 
   let pollId: string;
   let pollTitle: string;
 
   test.beforeEach(async ({ page }) => {
+    // Generate unique user and poll data for THIS test run to avoid collisions
+    const timestamp = Date.now();
+    const randomId = Math.random().toString(36).substring(2, 8);
+    const testUser = generateTestUser(`voters-${timestamp}`);
+    
     // Register and login for each test
     await page.goto('/register');
     
@@ -28,19 +35,6 @@ test.describe('Voter Management and Statistics', () => {
     
     // Submit and wait for navigation
     await page.click('[data-testid="register-submit-btn"]');
-    
-    // Wait for successful registration and redirect to dashboard
-    // Check for any registration errors first
-    await page.waitForTimeout(2000);
-    const hasError = await page.locator('[data-testid="register-error"]').count() > 0;
-    if (hasError) {
-      const errorText = await page.locator('[data-testid="register-error"]').textContent();
-      console.log('Registration error:', errorText);
-      // Try with a different email to avoid conflicts
-      testUser.email = `test-${Date.now()}-${Math.random().toString(36).substr(2, 9)}@example.com`;
-      await page.fill('[data-testid="register-email-input"]', testUser.email);
-      await page.click('[data-testid="register-submit-btn"]');
-    }
     
     await expect(page).toHaveURL('/dashboard', { timeout: 15000 });
 

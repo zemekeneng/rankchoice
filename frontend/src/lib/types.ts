@@ -161,6 +161,7 @@ export interface CreatePollForm {
 export interface CreateCandidateForm {
 	name: string;
 	description?: string;
+	id?: string; // Optional ID for tracking existing candidates during editing
 }
 
 // Authentication types
