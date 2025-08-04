@@ -17,7 +17,7 @@
 - **✅ RCV_ALGORITHM.md** - Ranked-choice voting algorithm implementation
 - **✅ SVELTE5_GUIDE.md** - Svelte 5 syntax and patterns guide
 - **✅ MAKEFILE_COMMANDS.md** - Complete Makefile usage documentation
-- **✅ QUICKSTART.md** - Developer onboarding guide
+- **✅ Developer onboarding guide** - Integrated into main README
 
 #### Project Structure
 ```
@@ -324,7 +324,7 @@ All core functionality has been implemented and tested! The RankChoice.app MVP i
 - ✅ **RCV Tabulation Engine** - Production-ready ranked-choice voting algorithm
 - ✅ **Comprehensive Testing** - 66/67 E2E tests passing (98.5% success rate)
 
-For remaining development items, see **[DEVELOPMENT_TODO.md](./DEVELOPMENT_TODO.md)**
+For remaining development items, see the **[Remaining Development Items](#-remaining-development-items)** section below
 
 ### **Development Approach**
 
@@ -420,7 +420,7 @@ make stop
 
 ## ✅ **Core Development Complete**
 
-All essential MVP features are implemented and working. See [DEVELOPMENT_TODO.md](./DEVELOPMENT_TODO.md) for remaining enhancement opportunities.
+All essential MVP features are implemented and working. See the **[Remaining Development Items](#-remaining-development-items)** section for remaining enhancement opportunities.
 
 ## 🧪 **E2E Test Coverage**
 
@@ -530,6 +530,47 @@ make test-e2e-debug     # Interactive debugging
 - ✅ **Added `make kill-ports`** - Standalone command to kill processes on development ports
 - ✅ **Enhanced `make stop`** - Now includes port cleanup for better process management
 - ✅ **Updated documentation** - Added troubleshooting workflows with speed recommendations
+
+## 📋 **Remaining Development Items**
+
+### 🎯 **17. Email Distribution [MEDIUM PRIORITY]**
+- [ ] Create email service (Node.js Lambda)
+- [ ] Integrate email sending with voter invitation API
+- [ ] Create email templates (invitation, registration)
+- [ ] Add invitation delivery tracking
+- [ ] Add email configuration and settings
+
+### 🎯 **18. Production Readiness [MEDIUM PRIORITY]**
+- [ ] Add rate limiting to API endpoints
+- [ ] Implement proper logging and monitoring
+- [ ] Add error tracking and alerting
+- [ ] Security hardening review
+
+## 🚨 **Known Issues & Technical Debt**
+
+1. **Email service not yet created** (voter distribution)
+2. **No rate limiting implemented yet**
+
+## 🚀 **Next Priority Recommendations**
+
+### **Immediate Priority (Current Focus)**
+
+1. **Email Distribution System [IN PROGRESS]**
+   ```bash
+   # Create email service infrastructure
+   # Implement email templates for invitations
+   # Add SMTP/SES configuration
+   # Integrate with voter management API
+   # Add delivery tracking and status
+   ```
+
+2. **Production Readiness**
+   ```bash
+   # Add rate limiting to API endpoints
+   # Implement proper logging and monitoring
+   # Add error tracking and alerting
+   # Security hardening review
+   ```
 
 ## 📝 **Notes for New Development Sessions**
 

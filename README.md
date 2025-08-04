@@ -132,24 +132,38 @@ For detailed commands, see [`docs/MAKEFILE_COMMANDS.md`](docs/MAKEFILE_COMMANDS.
 
 ## 📖 Documentation
 
-### 🚀 Getting Started
-- **[Quick Start Card](QUICKSTART.md)** - **ONE-PAGE** developer reference (START HERE)
-- **[Development Process](docs/DEVELOPMENT_PROCESS.md)** - Complete standard workflow
-- **[Makefile Commands](docs/MAKEFILE_COMMANDS.md)** - Full command reference
-- **[Setup Instructions](#-quick-start)** - Detailed setup guide
+This project maintains comprehensive documentation organized by purpose and audience:
 
-### 📋 Project Information
-- **[Development Status](DEVELOPMENT_STATUS.md)** - Current implementation status and roadmap
-- **[Project Planning](PLANNING.md)** - Complete project specification and architecture
+### 🚀 Getting Started (Developers)
+| Document | Purpose | Audience |
+|----------|---------|----------|
+| **[Quick Start](#-quick-start)** | Essential setup and development commands | All developers (START HERE) |
+| **[Development Process](docs/DEVELOPMENT_PROCESS.md)** | Complete standard workflow | All developers |
+| **[Makefile Commands](docs/MAKEFILE_COMMANDS.md)** | Full command reference | All developers |
 
-### 🔧 Technical Documentation
-- **[API Specification](docs/API_SPECIFICATION.md)** - Detailed REST API documentation
-- **[RCV Algorithm](docs/RCV_ALGORITHM.md)** - Ranked-choice voting implementation
-- **[Svelte 5 Guide](docs/SVELTE5_GUIDE.md)** - Frontend development patterns
+### 📋 Project Information (Product & Planning)
+| Document | Purpose | Audience |
+|----------|---------|----------|
+| **[Development Status](DEVELOPMENT_STATUS.md)** | Current implementation status and next steps | Product managers, developers |
+| **[Project Planning](PLANNING.md)** | Complete project specification and architecture | Product managers, architects |
 
-### 🧪 Testing
-- **[Testing Guide](backend/docs/TESTING_GUIDE.md)** - Backend testing documentation
-- **[E2E Tests README](frontend/e2e/README.md)** - End-to-end testing guide
+### 🔧 Technical Documentation (Implementation)
+| Document | Purpose | Audience |
+|----------|---------|----------|
+| **[API Specification](docs/API_SPECIFICATION.md)** | Complete REST API documentation | Backend developers, frontend developers |
+| **[RCV Algorithm](docs/RCV_ALGORITHM.md)** | Ranked-choice voting implementation details | Algorithm developers |
+| **[Svelte 5 Guide](docs/SVELTE5_GUIDE.md)** | Frontend development patterns and syntax | Frontend developers |
+
+### 🧪 Testing Documentation (Quality Assurance)
+| Document | Purpose | Audience |
+|----------|---------|----------|
+| **[Backend Testing Guide](backend/docs/TESTING_GUIDE.md)** | Backend testing strategy and implementation | Backend developers, QA |
+| **[E2E Testing Guide](frontend/e2e/README.md)** | End-to-end testing comprehensive guide | All developers, QA |
+
+### 🔌 Service Documentation (Microservices)
+| Document | Purpose | Audience |
+|----------|---------|----------|
+| **[Email Service](services/email/README.md)** | Email microservice setup and API | DevOps, backend developers |
 
 ## 🧪 Testing
 
@@ -217,6 +231,16 @@ make status && make health && make logs
 # Before committing
 make fmt && make lint && make test
 ```
+
+### Troubleshooting
+| Problem | Solution |
+|---------|----------|
+| 404 errors | `make smart-restart` |
+| Port conflicts | `make kill-ports && make dev-bg` |
+| Code not updating | `make fast-restart` |
+| Dependency issues | `make force-restart` |
+
+> 🛡️ **The Golden Rule**: ALWAYS use `make` commands. Never start services manually.
 
 ## 🚧 Current Status
 

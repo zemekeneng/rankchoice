@@ -110,9 +110,6 @@ async fn test_create_voter_with_email(pool: PgPool) {
 async fn test_create_anonymous_voter(pool: PgPool) {
     let app = create_test_app(pool.clone()).await;
     
-    // Create a test poll
-    let poll_id = create_test_poll(&pool).await;
-    
     // Get auth token by registering and logging in a user
     let user_data = json!({
         "email": "testuser2@example.com",
@@ -136,6 +133,36 @@ async fn test_create_anonymous_voter(pool: PgPool) {
     let body = to_bytes(register_response.into_body(), usize::MAX).await.unwrap();
     let register_data: Value = serde_json::from_slice(&body).unwrap();
     let token = register_data["data"]["token"].as_str().unwrap();
+    
+    // Create a poll with this user
+    let poll_data = json!({
+        "title": "Test Anonymous Poll",
+        "description": "Test poll for anonymous voters",
+        "pollType": "single_winner",
+        "numWinners": 1,
+        "candidates": [
+            {"name": "Candidate A", "description": "First candidate"},
+            {"name": "Candidate B", "description": "Second candidate"}
+        ]
+    });
+
+    let poll_response = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/api/polls")
+                .header("content-type", "application/json")
+                .header("authorization", format!("Bearer {}", token))
+                .body(Body::from(poll_data.to_string()))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    let poll_body = to_bytes(poll_response.into_body(), usize::MAX).await.unwrap();
+    let poll_result: Value = serde_json::from_slice(&poll_body).unwrap();
+    let poll_id = poll_result["data"]["id"].as_str().unwrap();
     
     // Create anonymous voter (no email)
     let voter_request = json!({});
@@ -170,9 +197,6 @@ async fn test_create_anonymous_voter(pool: PgPool) {
 async fn test_list_voters_empty(pool: PgPool) {
     let app = create_test_app(pool.clone()).await;
     
-    // Create a test poll
-    let poll_id = create_test_poll(&pool).await;
-    
     // Get auth token by registering and logging in a user
     let user_data = json!({
         "email": "listuser@example.com",
@@ -196,6 +220,36 @@ async fn test_list_voters_empty(pool: PgPool) {
     let body = to_bytes(register_response.into_body(), usize::MAX).await.unwrap();
     let register_data: Value = serde_json::from_slice(&body).unwrap();
     let token = register_data["data"]["token"].as_str().unwrap();
+    
+    // Create a poll with this user
+    let poll_data = json!({
+        "title": "Empty Voters Test Poll",
+        "description": "Test poll with no voters",
+        "pollType": "single_winner",
+        "numWinners": 1,
+        "candidates": [
+            {"name": "Candidate A", "description": "First candidate"},
+            {"name": "Candidate B", "description": "Second candidate"}
+        ]
+    });
+
+    let poll_response = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/api/polls")
+                .header("content-type", "application/json")
+                .header("authorization", format!("Bearer {}", token))
+                .body(Body::from(poll_data.to_string()))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    let poll_body = to_bytes(poll_response.into_body(), usize::MAX).await.unwrap();
+    let poll_result: Value = serde_json::from_slice(&poll_body).unwrap();
+    let poll_id = poll_result["data"]["id"].as_str().unwrap();
     
     let response = app
         .oneshot(
@@ -225,9 +279,6 @@ async fn test_list_voters_empty(pool: PgPool) {
 async fn test_list_voters_with_data(pool: PgPool) {
     let app = create_test_app(pool.clone()).await;
     
-    // Create a test poll
-    let poll_id = create_test_poll(&pool).await;
-    
     // Get auth token by registering and logging in a user
     let user_data = json!({
         "email": "listwithdata@example.com",
@@ -251,6 +302,36 @@ async fn test_list_voters_with_data(pool: PgPool) {
     let body = to_bytes(register_response.into_body(), usize::MAX).await.unwrap();
     let register_data: Value = serde_json::from_slice(&body).unwrap();
     let token = register_data["data"]["token"].as_str().unwrap();
+    
+    // Create a poll with this user
+    let poll_data = json!({
+        "title": "Voters With Data Test Poll",
+        "description": "Test poll with multiple voters",
+        "pollType": "single_winner",
+        "numWinners": 1,
+        "candidates": [
+            {"name": "Candidate A", "description": "First candidate"},
+            {"name": "Candidate B", "description": "Second candidate"}
+        ]
+    });
+
+    let poll_response = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/api/polls")
+                .header("content-type", "application/json")
+                .header("authorization", format!("Bearer {}", token))
+                .body(Body::from(poll_data.to_string()))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    let poll_body = to_bytes(poll_response.into_body(), usize::MAX).await.unwrap();
+    let poll_result: Value = serde_json::from_slice(&poll_body).unwrap();
+    let poll_id = poll_result["data"]["id"].as_str().unwrap();
     
     // Create some voters
     let voters_to_add = [

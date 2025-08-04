@@ -11,15 +11,44 @@ use rankchoice_api::models::ballot::{Ballot, BallotRanking, Voter};
 mod common;
 use common::*;
 
+// Helper function to register user and get auth token
+async fn setup_authenticated_user(app: &axum::Router) -> String {
+    let user_data = json!({
+        "email": "resultstest@example.com",
+        "password": "testpassword123",
+        "name": "Results Test User"
+    });
+
+    let response = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/api/auth/register")
+                .header("content-type", "application/json")
+                .body(Body::from(user_data.to_string()))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
+    let response_data: Value = serde_json::from_slice(&body).unwrap();
+    
+    response_data["data"]["token"].as_str().unwrap().to_string()
+}
+
 #[sqlx::test]
 async fn test_get_poll_results_not_found(pool: PgPool) {
     let app = create_test_app(pool).await;
+    let token = setup_authenticated_user(&app).await;
     
     let non_existent_poll_id = Uuid::new_v4();
     
     let request = Request::builder()
         .method(Method::GET)
         .uri(format!("/api/polls/{}/results", non_existent_poll_id))
+        .header("authorization", format!("Bearer {}", token))
         .body(Body::empty())
         .unwrap();
 
@@ -37,12 +66,14 @@ async fn test_get_poll_results_not_found(pool: PgPool) {
 #[sqlx::test]
 async fn test_get_rcv_rounds_not_found(pool: PgPool) {
     let app = create_test_app(pool).await;
+    let token = setup_authenticated_user(&app).await;
     
     let non_existent_poll_id = Uuid::new_v4();
     
     let request = Request::builder()
         .method(Method::GET)
         .uri(format!("/api/polls/{}/results/rounds", non_existent_poll_id))
+        .header("authorization", format!("Bearer {}", token))
         .body(Body::empty())
         .unwrap();
 
@@ -60,6 +91,7 @@ async fn test_get_rcv_rounds_not_found(pool: PgPool) {
 #[sqlx::test]
 async fn test_poll_results_no_votes(pool: PgPool) {
     let app = create_test_app(pool.clone()).await;
+    let token = setup_authenticated_user(&app).await;
     
     // Setup test poll without any votes
     setup_test_user(&pool).await;
@@ -69,6 +101,7 @@ async fn test_poll_results_no_votes(pool: PgPool) {
     let request = Request::builder()
         .method(Method::GET)
         .uri(format!("/api/polls/{}/results", poll_id))
+        .header("authorization", format!("Bearer {}", token))
         .body(Body::empty())
         .unwrap();
 
@@ -89,6 +122,7 @@ async fn test_poll_results_no_votes(pool: PgPool) {
 #[sqlx::test]
 async fn test_rcv_rounds_no_votes(pool: PgPool) {
     let app = create_test_app(pool.clone()).await;
+    let token = setup_authenticated_user(&app).await;
     
     // Setup test poll without any votes
     setup_test_user(&pool).await;
@@ -98,6 +132,7 @@ async fn test_rcv_rounds_no_votes(pool: PgPool) {
     let request = Request::builder()
         .method(Method::GET)
         .uri(format!("/api/polls/{}/results/rounds", poll_id))
+        .header("authorization", format!("Bearer {}", token))
         .body(Body::empty())
         .unwrap();
 
@@ -148,9 +183,11 @@ async fn test_results_with_votes(pool: PgPool) {
         .expect("Failed to create ballot");
     
     // Test getting results
+    let token = setup_authenticated_user(&app).await;
     let request = Request::builder()
         .method(Method::GET)
         .uri(format!("/api/polls/{}/results", poll_id))
+        .header("authorization", format!("Bearer {}", token))
         .body(Body::empty())
         .unwrap();
 
@@ -170,6 +207,7 @@ async fn test_results_with_votes(pool: PgPool) {
     let rounds_request = Request::builder()
         .method(Method::GET)
         .uri(format!("/api/polls/{}/results/rounds", poll_id))
+        .header("authorization", format!("Bearer {}", token))
         .body(Body::empty())
         .unwrap();
 

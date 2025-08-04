@@ -131,7 +131,7 @@
 			</p>
 		</div>
 
-		<form class="mt-8 space-y-6" action="" method="post" onsubmit={handleSubmit}>
+		<form class="mt-8 space-y-6" onsubmit={handleSubmit}>
 			<div class="rounded-md shadow-sm -space-y-px">
 				<div>
 					<label for="email" class="sr-only">Email address</label>
@@ -213,7 +213,7 @@
 
 			<div>
 				<button
-					type="submit"
+					type="button"
 					data-testid="login-submit-btn"
 					disabled={isSubmitting || authStore.isLoading}
 					onclick={handleSubmitButton}

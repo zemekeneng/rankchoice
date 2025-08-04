@@ -17,7 +17,10 @@
 		"test:e2e": "playwright test",
 		"test:e2e:headed": "playwright test --headed",
 		"test:e2e:debug": "playwright test --debug",
-		"test:e2e:report": "playwright show-report"
+		"test:e2e:report": "playwright show-report",
+		"build:serve": "sirv build --port 5174 --host --cors --single --quiet",
+		"test:e2e:static": "playwright test --config=playwright.static.config.ts",
+		"test:e2e:static:headed": "playwright test --config=playwright.static.config.ts --headed"
 	},
 	"devDependencies": {
 		"@playwright/test": "^1.49.1",
@@ -30,6 +33,7 @@
 		"prettier": "^3.4.2",
 		"prettier-plugin-svelte": "^3.3.3",
 		"prettier-plugin-tailwindcss": "^0.6.11",
+		"sirv-cli": "^3.0.1",
 		"svelte": "^5.0.0",
 		"svelte-check": "^4.0.0",
 		"tailwindcss": "^4.0.0",

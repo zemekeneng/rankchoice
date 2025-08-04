@@ -95,13 +95,7 @@ export default defineConfig({
 		minify: false, // Faster builds during dev
 		sourcemap: true,
 		rollupOptions: {
-			// Optimize chunk splitting for better caching
-			output: {
-				manualChunks: {
-					vendor: ['svelte', '@sveltejs/kit'],
-					utils: ['tailwindcss']
-				}
-			}
+			// Let Vite handle chunk splitting automatically
 		}
 	}
 	// Vitest configuration disabled to avoid conflicts with Playwright E2E tests

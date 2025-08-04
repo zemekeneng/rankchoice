@@ -359,13 +359,30 @@ pub async fn list_voters(
         })
         .collect();
 
-    let voted_count = voters.iter().filter(|v| v.has_voted()).count();
-    let pending_count = voters.len() - voted_count;
+    let registered_voted_count = voters.iter().filter(|v| v.has_voted()).count();
+    
+    // Count anonymous ballots (ballots with voter_id = NULL) for this poll
+    let anonymous_ballot_count = match sqlx::query!(
+        "SELECT COUNT(*) as count FROM ballots WHERE poll_id = $1 AND voter_id IS NULL",
+        poll_uuid
+    )
+    .fetch_one(pool)
+    .await {
+        Ok(row) => row.count.unwrap_or(0) as usize,
+        Err(e) => {
+            tracing::error!("Database error counting anonymous ballots: {}", e);
+            0
+        }
+    };
+    
+    // Total votes = registered voters who voted + anonymous ballots
+    let total_voted_count = registered_voted_count + anonymous_ballot_count;
+    let pending_count = voters.len() - registered_voted_count; // Only registered voters can be "pending"
 
     let response = VotersListResponse {
         voters: voter_responses,
         total: voters.len(),
-        voted_count,
+        voted_count: total_voted_count,
         pending_count,
     };
 

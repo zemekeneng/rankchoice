@@ -223,6 +223,18 @@ test-e2e-debug: ## Debug E2E tests interactively
 	@echo "🧪 Debugging E2E tests..."
 	@cd frontend && npm run test:e2e:debug
 
+test-e2e-static: ## Run E2E tests against static build (reliable, production-like)
+	@echo "🏗️ Building frontend for static testing..."
+	@$(MAKE) build-frontend
+	@echo "🧪 Running E2E tests against static server..."
+	@cd frontend && npm run test:e2e:static
+
+test-e2e-static-headed: ## Run E2E tests against static build with browser UI
+	@echo "🏗️ Building frontend for static testing..."
+	@$(MAKE) build-frontend
+	@echo "🧪 Running E2E tests against static server (headed mode)..."
+	@cd frontend && npm run test:e2e:static:headed
+
 # Utilities
 clean: ## Clean all build artifacts and dependencies
 	@echo "🧹 Cleaning build artifacts..."

@@ -2,7 +2,34 @@
 
 This directory contains comprehensive Playwright E2E tests that verify the complete user flows of the RankChoice application.
 
-**🚨 CRITICAL RULE: ALL TESTS MUST PASS - No exceptions. See `E2E_TESTING_SPECIFICATION.md` for complete requirements.**
+## 🚨 CRITICAL RULES
+
+### Test Success Criteria
+- **ALL TESTS MUST PASS** - No exceptions
+- If any test fails, the system is broken and must be fixed
+- **NEVER** claim a test "passed" when it failed
+- **NEVER** create redundant tests when existing tests fail
+- Fix the underlying issue, don't create workarounds
+
+### Test Organization
+- Each flow should have **ONE** comprehensive test file
+- No duplicate or overlapping test coverage
+- Tests must be deterministic and reliable
+- All tests use consistent `data-testid` attributes
+
+### Prohibited Test Patterns
+
+#### ❌ DO NOT CREATE
+- Multiple tests for the same functionality
+- Debug tests that duplicate existing coverage
+- "Simple" versions of existing comprehensive tests
+- Tests that accept failure as normal behavior
+
+#### ❌ DO NOT DO
+- Create new tests when existing tests fail - FIX THE FAILING TESTS
+- Claim tests pass when they show errors or failures
+- Skip assertions because "the API might work differently"
+- Use placeholder comments like "TODO: Fix this test"
 
 ## Test Files (Master Test Suite)
 
@@ -443,4 +470,39 @@ The comprehensive E2E test suite provides:
 - **Regression Prevention**: Automated detection of bugs and regressions
 - **CI/CD Ready**: Designed for automated testing in deployment pipelines
 
-These tests complement the unit tests and provide confidence that the complete application works as expected from a user's perspective. 
+These tests complement the unit tests and provide confidence that the complete application works as expected from a user's perspective.
+
+## Success Metrics
+
+### Definition of Success
+- **100% test pass rate** - No failures tolerated
+- All user flows work end-to-end without manual intervention
+- UI elements load correctly and are interactive
+- Data persistence works across all scenarios
+- Authentication and authorization work correctly
+
+### Failure Response
+1. **Identify root cause** - Don't create workaround tests
+2. **Fix the underlying issue** - Code, API, or UI problem
+3. **Verify fix with existing tests** - Don't create new redundant tests
+4. **Document any changes** - Update this documentation if needed
+
+## Test Execution Standards
+
+### Local Testing
+```bash
+# All tests must pass locally before committing
+npm run test:e2e
+
+# Debug individual tests
+npx playwright test [test-name].test.ts --headed
+```
+
+### CI/CD Requirements
+- All E2E tests must pass in CI
+- Any test failure blocks deployment
+- Tests must be deterministic and not flaky
+
+---
+
+**Remember**: E2E tests are the final validation that our application works for real users. If they fail, the application is broken. Fix the application, not the tests. 
