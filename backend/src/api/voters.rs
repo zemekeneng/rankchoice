@@ -361,27 +361,50 @@ pub async fn list_voters(
 
     let registered_voted_count = voters.iter().filter(|v| v.has_voted()).count();
     
-    // Count anonymous ballots (ballots with voter_id = NULL) for this poll
-    let anonymous_ballot_count = match sqlx::query!(
-        "SELECT COUNT(*) as count FROM ballots WHERE poll_id = $1 AND voter_id IS NULL",
+    // Fetch anonymous ballots (ballots with voter_id = NULL) for this poll
+    let anonymous_ballots = match sqlx::query!(
+        "SELECT id, submitted_at FROM ballots WHERE poll_id = $1 AND voter_id IS NULL ORDER BY submitted_at DESC",
         poll_uuid
     )
-    .fetch_one(pool)
+    .fetch_all(pool)
     .await {
-        Ok(row) => row.count.unwrap_or(0) as usize,
+        Ok(rows) => rows,
         Err(e) => {
-            tracing::error!("Database error counting anonymous ballots: {}", e);
-            0
+            tracing::error!("Database error fetching anonymous ballots: {}", e);
+            vec![]
         }
     };
     
+    // Create VoterResponse entries for anonymous ballots
+    let mut anonymous_voter_responses: Vec<VoterResponse> = anonymous_ballots
+        .iter()
+        .map(|ballot| {
+            let anonymous_id = format!("anon-{}", &ballot.id.to_string()[..8]); // Use first 8 chars of ballot ID
+            let submitted_at = ballot.submitted_at.expect("submitted_at cannot be null for ballots");
+            VoterResponse {
+                id: ballot.id.to_string(),
+                poll_id: poll_uuid.to_string(),
+                email: None, // Anonymous voters have no email
+                ballot_token: anonymous_id.clone(), // Use anonymous ID as display identifier
+                has_voted: true, // Anonymous ballots are always "voted"
+                invited_at: submitted_at.to_rfc3339(), // Use submitted_at as invited_at
+                voted_at: Some(submitted_at.to_rfc3339()),
+                voting_url: format!("Anonymous Vote ({})", anonymous_id), // Not a real URL for anonymous
+            }
+        })
+        .collect();
+    
+    // Combine registered voters and anonymous voters
+    let mut all_voter_responses = voter_responses;
+    all_voter_responses.append(&mut anonymous_voter_responses);
+    
     // Total votes = registered voters who voted + anonymous ballots
-    let total_voted_count = registered_voted_count + anonymous_ballot_count;
+    let total_voted_count = registered_voted_count + anonymous_ballots.len();
     let pending_count = voters.len() - registered_voted_count; // Only registered voters can be "pending"
 
     let response = VotersListResponse {
-        voters: voter_responses,
-        total: voters.len(),
+        voters: all_voter_responses,
+        total: voters.len() + anonymous_ballots.len(), // Total includes both registered and anonymous
         voted_count: total_voted_count,
         pending_count,
     };
