@@ -1,0 +1,4 @@
+domain_name       = "rankchoice.me"
+environment       = "prod"
+aws_region        = "us-east-1"
+neon_database_url = "" # Set via TF_VAR_neon_database_url env var

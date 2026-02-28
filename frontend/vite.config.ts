@@ -9,7 +9,7 @@ export default defineConfig({
 	server: {
 		// Increase connection limits and timeouts
 		host: '0.0.0.0', // Allow external connections
-		port: 5173,
+		port: 5174,
 		strictPort: true,
 		
 		// Performance optimizations

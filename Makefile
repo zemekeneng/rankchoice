@@ -1,16 +1,19 @@
-# RankChoice.app Development Environment Makefile
+# RankChoice.me Development & Deployment Makefile
 
-.PHONY: help dev dev-bg stop clean install build test docker logs status check-deps force-restart kill-ports smart-restart fast-restart
+.PHONY: help dev dev-bg stop clean install build test docker logs status check-deps \
+        force-restart kill-ports smart-restart fast-restart \
+        build-lambda deploy bootstrap tf-init tf-plan tf-apply migrate-prod
 
 # Default target
 help: ## Show this help message
-	@echo "RankChoice.app Development Commands:"
+	@echo "RankChoice.me Development Commands:"
 	@echo ""
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-25s\033[0m %s\n", $$1, $$2}'
 
-# Development Environment
+# ─── Development Environment ─────────────────────────────────────────────────
+
 dev: check-deps ## Start the full development environment (blocking)
-	@echo "🚀 Starting RankChoice.app development environment..."
+	@echo "🚀 Starting RankChoice.me development environment..."
 	@echo "📋 Starting services in order: Database → Backend → Frontend"
 	@$(MAKE) docker-up
 	@sleep 3
@@ -18,7 +21,7 @@ dev: check-deps ## Start the full development environment (blocking)
 	@$(MAKE) dev-parallel
 
 dev-bg: check-deps ## Start the full development environment in background
-	@echo "🚀 Starting RankChoice.app development environment in background..."
+	@echo "🚀 Starting RankChoice.me development environment in background..."
 	@$(MAKE) docker-up
 	@sleep 3
 	@$(MAKE) backend-bg
@@ -42,14 +45,14 @@ stop: ## Stop all development services
 	@docker-compose down
 	@echo "✅ All services stopped"
 
-kill-ports: ## Kill processes using development ports (8080, 5173)
-	@echo "🔫 Killing processes using ports 8080 and 5173..."
-	@lsof -ti:8080 | xargs -r kill -9 2>/dev/null || true
-	@lsof -ti:5173 | xargs -r kill -9 2>/dev/null || true
+kill-ports: ## Kill processes using development ports (8081, 5174)
+	@echo "🔫 Killing processes using ports 8081 and 5174..."
+	@lsof -ti:8081 | xargs -r kill -9 2>/dev/null || true
+	@lsof -ti:5174 | xargs -r kill -9 2>/dev/null || true
 	@sleep 1
 
 smart-restart: ## Smart restart - kills ports and restarts without recompilation (fastest)
-	@echo "⚡ Smart restarting RankChoice.app (no recompilation)..."
+	@echo "⚡ Smart restarting RankChoice.me (no recompilation)..."
 	@echo "🛑 Stopping all services..."
 	@pkill -f "cargo run" || true
 	@pkill -f "vite dev" || true
@@ -60,8 +63,8 @@ smart-restart: ## Smart restart - kills ports and restarts without recompilation
 	@$(MAKE) dev-bg
 	@echo "✅ Smart restart complete!"
 
-fast-restart: ## Fast restart - only recompiles app code, keeps dependencies (recommended)
-	@echo "🚀 Fast restarting RankChoice.app with incremental compilation..."
+fast-restart: ## Fast restart - only recompiles app code, keeps dependencies
+	@echo "🚀 Fast restarting RankChoice.me with incremental compilation..."
 	@echo "🛑 Stopping all services..."
 	@pkill -f "cargo run" || true
 	@pkill -f "vite dev" || true
@@ -75,8 +78,8 @@ fast-restart: ## Fast restart - only recompiles app code, keeps dependencies (re
 	@$(MAKE) dev-bg
 	@echo "✅ Fast restart complete!"
 
-force-restart: ## Force restart with full clean rebuild (slowest, use when dependencies are problematic)
-	@echo "🔄 Force restarting RankChoice.app with full clean compilation..."
+force-restart: ## Force restart with full clean rebuild (slowest)
+	@echo "🔄 Force restarting RankChoice.me with full clean compilation..."
 	@echo "🛑 Aggressively stopping all services..."
 	@pkill -f "cargo run" || true
 	@pkill -f "vite dev" || true
@@ -90,7 +93,8 @@ force-restart: ## Force restart with full clean rebuild (slowest, use when depen
 	@$(MAKE) dev-bg
 	@echo "✅ Force restart complete!"
 
-# Individual Services
+# ─── Individual Services ─────────────────────────────────────────────────────
+
 docker-up: ## Start database and supporting services
 	@echo "🐳 Starting database and supporting services..."
 	@docker-compose up -d postgres localstack mailhog
@@ -138,7 +142,8 @@ frontend-bg: ## Start the frontend development server in background
 		exit 1; \
 	fi
 
-# Installation and Setup
+# ─── Installation and Setup ─────────────────────────────────────────────────
+
 install: ## Install all dependencies
 	@echo "📦 Installing dependencies..."
 	@$(MAKE) install-backend
@@ -157,8 +162,9 @@ install-frontend: ## Install frontend dependencies
 setup-logs: ## Create logs directory
 	@mkdir -p logs
 
-# Database Management
-db-migrate: ## Run database migrations
+# ─── Database Management ────────────────────────────────────────────────────
+
+db-migrate: ## Run database migrations (local)
 	@echo "🗄️  Running database migrations..."
 	@cd backend && sqlx migrate run
 
@@ -170,14 +176,15 @@ db-reset: ## Reset database (drop and recreate)
 	@sleep 3
 	@$(MAKE) db-migrate
 
-# Building
+# ─── Building ───────────────────────────────────────────────────────────────
+
 build: ## Build both frontend and backend for production
 	@echo "🏗️  Building for production..."
 	@$(MAKE) build-backend
 	@$(MAKE) build-frontend
 	@echo "✅ Build complete"
 
-build-backend: ## Build backend for production
+build-backend: ## Build backend for production (native binary)
 	@echo "🦀 Building Rust backend..."
 	@cd backend && cargo build --release
 
@@ -185,7 +192,49 @@ build-frontend: ## Build frontend for production
 	@echo "💻 Building Svelte frontend..."
 	@cd frontend && npm run build
 
-# Testing
+build-lambda: ## Build backend as Lambda deployment package
+	@echo "🦀 Building Lambda function..."
+	@bash infrastructure/scripts/build-lambda.sh
+
+build-frontend-prod: ## Build frontend with production API URL
+	@echo "💻 Building Svelte frontend for production..."
+	@cd frontend && VITE_API_URL=https://rankchoice.me/api npm run build
+
+# ─── Infrastructure & Deployment ────────────────────────────────────────────
+
+bootstrap: ## One-time setup: create Terraform state bucket and lock table
+	@echo "🏗️  Bootstrapping Terraform state infrastructure..."
+	@bash infrastructure/terraform/bootstrap.sh
+
+tf-init: ## Initialize Terraform
+	@echo "🔧 Initializing Terraform..."
+	@cd infrastructure/terraform && terraform init
+
+tf-plan: ## Preview infrastructure changes
+	@echo "📋 Planning Terraform changes..."
+	@cd infrastructure/terraform && terraform plan
+
+tf-apply: ## Apply infrastructure changes
+	@echo "🚀 Applying Terraform changes..."
+	@cd infrastructure/terraform && terraform apply
+
+tf-fmt: ## Format Terraform files
+	@echo "🎨 Formatting Terraform files..."
+	@cd infrastructure/terraform && terraform fmt -recursive .
+
+tf-output: ## Show Terraform outputs
+	@cd infrastructure/terraform && terraform output
+
+deploy: ## Full production deploy: build Lambda + frontend, apply Terraform, sync S3, invalidate CDN
+	@echo "🚀 Deploying RankChoice.me to production..."
+	@bash infrastructure/scripts/deploy.sh
+
+migrate-prod: ## Run database migrations against Neon (requires DATABASE_URL env var)
+	@echo "🗄️  Running migrations against production database..."
+	@bash infrastructure/scripts/migrate.sh
+
+# ─── Testing ────────────────────────────────────────────────────────────────
+
 test: ## Run all tests (backend + frontend unit + E2E)
 	@echo "🧪 Running all tests..."
 	@$(MAKE) test-backend
@@ -223,7 +272,7 @@ test-e2e-debug: ## Debug E2E tests interactively
 	@echo "🧪 Debugging E2E tests..."
 	@cd frontend && npm run test:e2e:debug
 
-test-e2e-static: ## Run E2E tests against static build (reliable, production-like)
+test-e2e-static: ## Run E2E tests against static build (production-like)
 	@echo "🏗️ Building frontend for static testing..."
 	@$(MAKE) build-frontend
 	@echo "🧪 Running E2E tests against static server..."
@@ -235,7 +284,8 @@ test-e2e-static-headed: ## Run E2E tests against static build with browser UI
 	@echo "🧪 Running E2E tests against static server (headed mode)..."
 	@cd frontend && npm run test:e2e:static:headed
 
-# Utilities
+# ─── Utilities ──────────────────────────────────────────────────────────────
+
 clean: ## Clean all build artifacts and dependencies
 	@echo "🧹 Cleaning build artifacts..."
 	@cd backend && cargo clean
@@ -270,13 +320,13 @@ status: ## Show status of all services
 	fi
 	@printf "🦀 Backend:   "
 	@if pgrep -f "cargo run" > /dev/null; then \
-		echo "✅ Running (http://localhost:8080)"; \
+		echo "✅ Running (http://localhost:8081)"; \
 	else \
 		echo "❌ Stopped"; \
 	fi
 	@printf "💻 Frontend:  "
 	@if pgrep -f "npm run dev" > /dev/null; then \
-		echo "✅ Running (http://localhost:5173)"; \
+		echo "✅ Running (http://localhost:5174)"; \
 	else \
 		echo "❌ Stopped"; \
 	fi
@@ -286,11 +336,10 @@ health: ## Check health of all services
 	@echo "🏥 Health Check:"
 	@echo "==============="
 	@printf "Backend API: "
-	@curl -s http://localhost:8080/health > /dev/null && echo "✅ Healthy" || echo "❌ Unhealthy"
+	@curl -s http://localhost:8081/health > /dev/null && echo "✅ Healthy" || echo "❌ Unhealthy"
 	@printf "Frontend:    "
-	@curl -s http://localhost:5173 > /dev/null && echo "✅ Healthy" || echo "❌ Unhealthy"
+	@curl -s http://localhost:5174 > /dev/null && echo "✅ Healthy" || echo "❌ Unhealthy"
 
-# Dependency Checks
 check-deps: ## Check if all required tools are installed
 	@echo "🔍 Checking dependencies..."
 	@command -v cargo > /dev/null || (echo "❌ Rust/Cargo not found. Install from https://rustup.rs/" && exit 1)
@@ -300,36 +349,36 @@ check-deps: ## Check if all required tools are installed
 	@command -v docker-compose > /dev/null || (echo "❌ Docker Compose not found. Install Docker Desktop" && exit 1)
 	@echo "✅ All dependencies found"
 
-# Development helpers
-fmt: ## Format code (backend and frontend)
+check-deploy-deps: ## Check if deployment tools are installed
+	@echo "🔍 Checking deployment dependencies..."
+	@command -v cargo > /dev/null || (echo "❌ Rust/Cargo not found" && exit 1)
+	@command -v cargo-lambda > /dev/null || (echo "❌ cargo-lambda not found. Install: brew install cargo-lambda" && exit 1)
+	@command -v terraform > /dev/null || (echo "❌ Terraform not found. Install: brew install terraform" && exit 1)
+	@command -v aws > /dev/null || (echo "❌ AWS CLI not found. Install: brew install awscli" && exit 1)
+	@echo "✅ All deployment dependencies found"
+
+fmt: ## Format code (backend, frontend, and Terraform)
 	@echo "🎨 Formatting code..."
 	@cd backend && cargo fmt
 	@cd frontend && npm run format
+	@cd infrastructure/terraform && terraform fmt -recursive .
 
 lint: ## Lint code (backend and frontend)
 	@echo "🔍 Linting code..."
 	@cd backend && cargo clippy
 	@cd frontend && npm run lint
 
-# Quick development workflow
+# ─── Quick Workflows ────────────────────────────────────────────────────────
+
 quick-start: install dev-bg ## Quick start: install dependencies and start all services
 	@echo ""
-	@echo "🎉 RankChoice.app is ready!"
-	@echo "🌐 Frontend: http://localhost:5173"
-	@echo "🔧 Backend:  http://localhost:8080"
-	@echo "📧 MailHog:  http://localhost:8025"
+	@echo "🎉 RankChoice.me is ready!"
+	@echo "🌐 Frontend: http://localhost:5174"
+	@echo "🔧 Backend:  http://localhost:8081"
+	@echo "📧 MailHog:  http://localhost:8026"
 	@echo ""
 	@echo "Use 'make stop' to stop all services"
 	@echo "Use 'make status' to check service status"
 	@echo "Use 'make logs' to view logs"
 
 restart: stop dev-bg ## Restart all services
-
-# Infrastructure
-deploy-staging: build ## Deploy to staging environment
-	@echo "🚀 Deploying to staging..."
-	@cd infrastructure/terraform && terraform workspace select staging && terraform apply
-
-deploy-prod: build ## Deploy to production environment
-	@echo "🚀 Deploying to production..."
-	@cd infrastructure/terraform && terraform workspace select prod && terraform apply 

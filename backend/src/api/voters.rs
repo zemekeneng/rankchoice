@@ -208,7 +208,8 @@ pub async fn create_voter(
         }
     };
 
-    let voting_url = format!("http://localhost:5173/vote/{}", voter.ballot_token);
+    let frontend_url = std::env::var("FRONTEND_URL").unwrap_or_else(|_| "http://localhost:5174".to_string());
+    let voting_url = format!("{}/vote/{}", frontend_url, voter.ballot_token);
 
     // Send email invitation (if voter has an email)
     if let Some(ref voter_email) = voter.email {
@@ -345,7 +346,8 @@ pub async fn list_voters(
     let voter_responses: Vec<VoterResponse> = voters
         .iter()
         .map(|voter| {
-            let voting_url = format!("http://localhost:5173/vote/{}", voter.ballot_token);
+            let frontend_url = std::env::var("FRONTEND_URL").unwrap_or_else(|_| "http://localhost:5174".to_string());
+            let voting_url = format!("{}/vote/{}", frontend_url, voter.ballot_token);
             VoterResponse {
                 id: voter.id.to_string(),
                 poll_id: voter.poll_id.to_string(),
@@ -455,7 +457,8 @@ pub async fn create_registration_link(
     
     // Store the registration link in database (you might want to add a registration_links table)
     // For now, we'll return the link directly
-    let registration_url = format!("http://localhost:5173/register/{}", registration_token);
+    let frontend_url = std::env::var("FRONTEND_URL").unwrap_or_else(|_| "http://localhost:5174".to_string());
+    let registration_url = format!("{}/register/{}", frontend_url, registration_token);
 
     let response = RegistrationLinkResponse {
         poll_id: poll.id.to_string(),

@@ -7,7 +7,7 @@ export default defineConfig({
 	workers: process.env.CI ? 2 : 2, // Optimal concurrency with Vite optimizations
 	reporter: [['list'], ['html', { open: 'never' }]],
 	use: {
-		baseURL: 'http://localhost:5173',
+		baseURL: 'http://localhost:5174',
 		trace: 'on-first-retry',
 		actionTimeout: 10000,
 		navigationTimeout: 30000,
@@ -20,7 +20,7 @@ export default defineConfig({
 	],
 	webServer: {
 		command: 'npm run dev',
-		port: 5173,
+		port: 5174,
 		reuseExistingServer: true,
 	},
 });
