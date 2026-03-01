@@ -4,6 +4,7 @@ export interface User {
 	email: string;
 	name?: string;
 	role: 'pollster' | 'admin';
+	emailVerified: boolean;
 	createdAt: string;
 	updatedAt: string;
 }

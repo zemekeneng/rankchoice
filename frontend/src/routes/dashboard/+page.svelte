@@ -11,6 +11,32 @@
 	let isLoading = $state(true);
 	let error = $state<string | null>(null);
 	let showSuccess = $state(false);
+	let isResendingVerification = $state(false);
+	let verificationResent = $state(false);
+	let resendError = $state<string | null>(null);
+
+	async function resendVerification() {
+		if (isResendingVerification) return;
+		isResendingVerification = true;
+		resendError = null;
+		try {
+			// Ensure API client has current token from auth store
+			const token =
+				authStore.tokens?.token ?? (authStore.tokens as { access_token?: string })?.access_token;
+			if (!token) {
+				resendError = 'Not logged in. Please log in again.';
+				return;
+			}
+			await apiClient.resendVerification(token);
+			verificationResent = true;
+			setTimeout(() => { verificationResent = false; }, 5000);
+		} catch (err) {
+			console.error('Failed to resend verification:', err);
+			resendError = err instanceof Error ? err.message : 'Failed to send. Please try again.';
+		} finally {
+			isResendingVerification = false;
+		}
+	}
 
 	// Redirect if not authenticated (wait for auth to load first)
 	$effect(() => {
@@ -122,6 +148,44 @@
 </svelte:head>
 
 <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+	<!-- Email Verification Banner -->
+	{#if authStore.user && !(authStore.user.emailVerified ?? (authStore.user as any).email_verified)}
+		<div class="mb-6 bg-yellow-50 border border-yellow-200 rounded-md p-4">
+			<div class="flex">
+				<div class="flex-shrink-0">
+					<svg class="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+						<path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+					</svg>
+				</div>
+				<div class="ml-3 flex-1">
+					<h3 class="text-sm font-medium text-yellow-800">
+						Verify your email address
+					</h3>
+					<div class="mt-1 text-sm text-yellow-700">
+						{#if verificationResent}
+							<p>Verification email sent! Check your inbox.</p>
+						{:else}
+							<p>
+								We sent a verification email to <strong>{authStore.user.email}</strong>.
+								Please check your inbox and click the link to verify your account.
+							</p>
+							{#if resendError}
+								<p class="mt-1 text-red-600">{resendError}</p>
+							{/if}
+							<button
+								onclick={resendVerification}
+								disabled={isResendingVerification}
+								class="mt-2 text-sm font-medium text-yellow-800 underline hover:text-yellow-900 disabled:opacity-50"
+							>
+								{isResendingVerification ? 'Sending...' : 'Resend verification email'}
+							</button>
+						{/if}
+					</div>
+				</div>
+			</div>
+		</div>
+	{/if}
+
 	<!-- Header -->
 	<div class="md:flex md:items-center md:justify-between">
 		<div class="flex-1 min-w-0">

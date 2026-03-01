@@ -24,7 +24,7 @@ describe('EmailService', () => {
     mockVoterInvitationData = {
       pollTitle: 'Test Poll',
       pollDescription: 'A test poll for voting',
-      votingUrl: 'https://rankchoice.app/vote/test-token',
+      votingUrl: 'https://rankchoice.me/vote/test-token',
       pollOwnerName: 'John Doe',
       pollOwnerEmail: 'john@example.com',
       closesAt: '2024-12-31T23:59:59Z',
@@ -36,7 +36,7 @@ describe('EmailService', () => {
       pollDescription: 'A test poll for voting',
       winnerName: 'Candidate A',
       totalVotes: 100,
-      resultsUrl: 'https://rankchoice.app/polls/123/results',
+      resultsUrl: 'https://rankchoice.me/polls/123/results',
       pollOwnerName: 'John Doe',
       voterName: 'Jane Smith',
       finalRankings: [

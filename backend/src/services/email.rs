@@ -80,6 +80,26 @@ pub struct FinalRanking {
     pub percentage: f64,
 }
 
+#[derive(Debug, Serialize)]
+pub struct EmailVerificationRequest {
+    #[serde(rename = "verificationUrl")]
+    pub verification_url: String,
+    #[serde(rename = "userName")]
+    pub user_name: Option<String>,
+    pub to: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct PasswordResetRequest {
+    #[serde(rename = "resetUrl")]
+    pub reset_url: String,
+    #[serde(rename = "userName")]
+    pub user_name: Option<String>,
+    #[serde(rename = "expiresIn")]
+    pub expires_in: String,
+    pub to: String,
+}
+
 #[derive(Debug, Deserialize)]
 pub struct EmailResponse {
     pub success: bool,
@@ -183,6 +203,64 @@ impl EmailService {
     ) -> Result<EmailResponse> {
         let url = format!("{}/api/email/poll-results", self.base_url);
         
+        let response = self
+            .client
+            .post(&url)
+            .header("X-API-Key", &self.api_key)
+            .json(&request)
+            .send()
+            .await
+            .context("Failed to send HTTP request to email service")?;
+
+        if !response.status().is_success() {
+            let status = response.status();
+            let text = response.text().await.unwrap_or_default();
+            anyhow::bail!("Email service returned error {}: {}", status, text);
+        }
+
+        let email_response: EmailResponse = response
+            .json()
+            .await
+            .context("Failed to parse email service response")?;
+
+        Ok(email_response)
+    }
+
+    pub async fn send_email_verification(
+        &self,
+        request: EmailVerificationRequest,
+    ) -> Result<EmailResponse> {
+        let url = format!("{}/api/email/email-verification", self.base_url);
+
+        let response = self
+            .client
+            .post(&url)
+            .header("X-API-Key", &self.api_key)
+            .json(&request)
+            .send()
+            .await
+            .context("Failed to send HTTP request to email service")?;
+
+        if !response.status().is_success() {
+            let status = response.status();
+            let text = response.text().await.unwrap_or_default();
+            anyhow::bail!("Email service returned error {}: {}", status, text);
+        }
+
+        let email_response: EmailResponse = response
+            .json()
+            .await
+            .context("Failed to parse email service response")?;
+
+        Ok(email_response)
+    }
+
+    pub async fn send_password_reset(
+        &self,
+        request: PasswordResetRequest,
+    ) -> Result<EmailResponse> {
+        let url = format!("{}/api/email/password-reset", self.base_url);
+
         let response = self
             .client
             .post(&url)

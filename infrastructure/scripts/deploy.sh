@@ -32,7 +32,7 @@ echo ""
 echo "=== Step 3: Terraform Apply ==="
 cd "${TF_DIR}"
 terraform init
-terraform apply
+terraform apply -auto-approve
 
 echo ""
 echo "=== Step 4: Sync Frontend to S3 ==="

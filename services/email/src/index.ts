@@ -1,14 +1,13 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import dotenv from 'dotenv';
 import { emailRouter } from './routes/email';
 import { healthRouter } from './routes/health';
 import { errorHandler } from './middleware/errorHandler';
 import { validateApiKey } from './middleware/auth';
-
-// Load environment variables
-dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;

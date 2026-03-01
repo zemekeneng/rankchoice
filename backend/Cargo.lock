@@ -2645,6 +2645,7 @@ dependencies = [
  "axum",
  "chrono",
  "dotenv",
+ "hex",
  "hyper 1.6.0",
  "ipnetwork",
  "jsonwebtoken",

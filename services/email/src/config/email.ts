@@ -44,13 +44,12 @@ export function createEmailConfig(): EmailConfig {
       pass: process.env.SMTP_PASS || '',
     },
     from: {
-      name: process.env.FROM_NAME || 'RankChoice.app',
-      address: process.env.FROM_EMAIL || 'noreply@rankchoice.app',
+      name: process.env.FROM_NAME || 'RankChoice.me',
+      address: process.env.FROM_EMAIL || 'noreply@rankchoice.me',
     },
   };
 
-  // Validate required config
-  if (!config.auth.user || !config.auth.pass) {
+  if (process.env.NODE_ENV !== 'development' && (!config.auth.user || !config.auth.pass)) {
     throw new Error('SMTP authentication credentials are required');
   }
 
@@ -60,28 +59,18 @@ export function createEmailConfig(): EmailConfig {
 export function getEmailTransporter(): Transporter {
   if (!transporter) {
     const config = createEmailConfig();
-    
-    // Create transporter based on environment
-    if (process.env.NODE_ENV === 'development') {
-      // Use Ethereal Email for development testing
-      transporter = nodemailer.createTransport({
-        host: 'smtp.ethereal.email',
-        port: 587,
-        secure: false,
-        auth: {
-          user: process.env.ETHEREAL_USER || '',
-          pass: process.env.ETHEREAL_PASS || '',
-        },
-      });
-    } else {
-      // Use configured SMTP for production
-      transporter = nodemailer.createTransport({
-        host: config.host,
-        port: config.port,
-        secure: config.secure,
-        auth: config.auth,
-      });
+
+    const transportOptions: nodemailer.TransportOptions & Record<string, unknown> = {
+      host: config.host,
+      port: config.port,
+      secure: config.secure,
+    };
+
+    if (config.auth.user && config.auth.pass) {
+      transportOptions.auth = config.auth;
     }
+
+    transporter = nodemailer.createTransport(transportOptions);
   }
 
   return transporter!;

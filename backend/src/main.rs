@@ -14,6 +14,7 @@ mod middleware;
 mod models;
 mod services;
 
+use api::auth;
 use services::auth::AuthService;
 
 #[derive(Serialize)]
@@ -59,9 +60,13 @@ async fn create_pool() -> Result<PgPool, Box<dyn std::error::Error>> {
 fn create_router(auth_service: AuthService) -> Router {
     Router::new()
         .route("/health", get(health))
-        .route("/api/auth/register", post(api::auth::register))
-        .route("/api/auth/login", post(api::auth::login))
-        .route("/api/auth/refresh", post(api::auth::refresh))
+        .route("/api/auth/register", post(auth::register))
+        .route("/api/auth/login", post(auth::login))
+        .route("/api/auth/refresh", post(auth::refresh))
+        .route("/api/auth/verify-email", post(auth::verify_email))
+        .route("/api/auth/forgot-password", post(auth::forgot_password))
+        .route("/api/auth/reset-password", post(auth::reset_password))
+        .route("/api/auth/resend-verification", post(auth::resend_verification))
         .route("/api/public/polls/:id", get(api::polls::get_public_poll))
         .route("/api/public/polls/:id/vote", post(api::voting::submit_anonymous_vote))
         .route("/api/polls", get(api::polls::list_polls))
@@ -98,7 +103,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     sqlx::migrate!("./migrations").run(&pool).await?;
     tracing::info!("Database migrations completed");
 
-    let auth_service = AuthService::new(pool);
+    let mut auth_service = AuthService::new(pool);
+    auth_service.init_ses().await;
     let app = create_router(auth_service);
 
     let port: u16 = std::env::var("PORT")
@@ -123,7 +129,8 @@ async fn main() -> Result<(), lambda_http::Error> {
         .init();
 
     let pool = create_pool().await.expect("Failed to create database pool");
-    let auth_service = AuthService::new(pool);
+    let mut auth_service = AuthService::new(pool);
+    auth_service.init_ses().await;
     let app = create_router(auth_service);
 
     lambda_http::run(app).await

@@ -37,9 +37,12 @@ pub async fn auth_middleware(
             )
         })?;
 
-    // Extract token from "Bearer <token>"
+    // Extract token from "Bearer <token>" (case-insensitive prefix)
     let token = authorization
+        .trim()
         .strip_prefix("Bearer ")
+        .or_else(|| authorization.trim().strip_prefix("bearer "))
+        .map(|s| s.trim())
         .ok_or_else(|| {
             (
                 StatusCode::UNAUTHORIZED,

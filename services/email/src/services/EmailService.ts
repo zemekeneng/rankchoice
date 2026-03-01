@@ -1,6 +1,8 @@
 import { getEmailTransporter, EmailResult, createEmailConfig } from '../config/email';
 import { createVoterInvitationTemplate, VoterInvitationData } from '../templates/voterInvitation';
 import { createPollResultsTemplate, PollResultsData } from '../templates/pollResults';
+import { createEmailVerificationTemplate, EmailVerificationData } from '../templates/emailVerification';
+import { createPasswordResetTemplate, PasswordResetData } from '../templates/passwordReset';
 import { v4 as uuidv4 } from 'uuid';
 
 export interface EmailTrackingInfo {
@@ -26,6 +28,16 @@ export class EmailService {
   async sendPollResults(data: PollResultsData, to: string): Promise<EmailResult> {
     const template = createPollResultsTemplate(data);
     return this.sendEmail(to, template, 'poll_results');
+  }
+
+  async sendEmailVerification(data: EmailVerificationData, to: string): Promise<EmailResult> {
+    const template = createEmailVerificationTemplate(data);
+    return this.sendEmail(to, template, 'email_verification');
+  }
+
+  async sendPasswordReset(data: PasswordResetData, to: string): Promise<EmailResult> {
+    const template = createPasswordResetTemplate(data);
+    return this.sendEmail(to, template, 'password_reset');
   }
 
   async sendBulkVoterInvitations(

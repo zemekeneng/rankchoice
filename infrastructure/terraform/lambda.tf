@@ -84,11 +84,13 @@ resource "aws_lambda_function" "api" {
 
   environment {
     variables = {
-      RUST_LOG     = var.environment == "prod" ? "info" : "debug"
-      DATABASE_URL = var.neon_database_url
-      ENVIRONMENT  = var.environment
-      JWT_SECRET   = random_password.jwt_secret.result
-      FRONTEND_URL = "https://${var.domain_name}"
+      RUST_LOG         = var.environment == "prod" ? "info" : "debug"
+      DATABASE_URL     = var.neon_database_url
+      ENVIRONMENT      = var.environment
+      JWT_SECRET       = random_password.jwt_secret.result
+      FRONTEND_URL     = "https://${var.domain_name}"
+      USE_SES          = "true"
+      SES_FROM_ADDRESS = "noreply@${var.domain_name}"
     }
   }
 

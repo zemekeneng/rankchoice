@@ -239,6 +239,14 @@ class AuthStore {
 		this.error = null;
 	}
 
+	// Update user after email verification (keeps rest of state, updates emailVerified)
+	setEmailVerified(): void {
+		if (this.user) {
+			this.user = { ...this.user, emailVerified: true };
+			this.saveToStorage();
+		}
+	}
+
 	// Check if user has specific role
 	hasRole(role: string): boolean {
 		return this.user?.role === role;

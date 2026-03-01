@@ -52,7 +52,8 @@ class APIClient {
 			...((options.headers as Record<string, string>) || {})
 		};
 
-		if (this.authToken) {
+		// Add Authorization if not already provided and we have a stored token
+		if (!headers.Authorization && this.authToken) {
 			headers.Authorization = `Bearer ${this.authToken}`;
 		}
 
@@ -111,6 +112,42 @@ class APIClient {
 		const response = await this.request<AuthResponse>('/auth/refresh', {
 			method: 'POST',
 			body: JSON.stringify(refreshData)
+		});
+		return response.data!;
+	}
+
+	async verifyEmail(token: string): Promise<{ message: string }> {
+		const response = await this.request<{ message: string }>('/auth/verify-email', {
+			method: 'POST',
+			body: JSON.stringify({ token })
+		});
+		return response.data!;
+	}
+
+	async forgotPassword(email: string): Promise<{ message: string }> {
+		const response = await this.request<{ message: string }>('/auth/forgot-password', {
+			method: 'POST',
+			body: JSON.stringify({ email })
+		});
+		return response.data!;
+	}
+
+	async resetPassword(token: string, password: string): Promise<{ message: string }> {
+		const response = await this.request<{ message: string }>('/auth/reset-password', {
+			method: 'POST',
+			body: JSON.stringify({ token, password })
+		});
+		return response.data!;
+	}
+
+	async resendVerification(token?: string): Promise<{ message: string }> {
+		const headers: Record<string, string> = {};
+		if (token) {
+			headers.Authorization = `Bearer ${token}`;
+		}
+		const response = await this.request<{ message: string }>('/auth/resend-verification', {
+			method: 'POST',
+			headers
 		});
 		return response.data!;
 	}

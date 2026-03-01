@@ -1,6 +1,6 @@
-# RankChoice.app Email Service
+# RankChoice.me Email Service
 
-A Node.js microservice for handling email notifications for the RankChoice.app voting platform.
+A Node.js microservice for handling email notifications for the RankChoice.me voting platform.
 
 ## Features
 
@@ -40,8 +40,8 @@ SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=your-email@gmail.com
 SMTP_PASS=your-app-password
-FROM_EMAIL=noreply@rankchoice.app
-FROM_NAME=RankChoice.app
+FROM_EMAIL=noreply@rankchoice.me
+FROM_NAME=RankChoice.me
 ```
 
 ### 3. Development
@@ -75,7 +75,7 @@ Content-Type: application/json
 {
   "pollTitle": "Company Board Election",
   "pollDescription": "Annual election for board members",
-  "votingUrl": "https://rankchoice.app/vote/abc123",
+  "votingUrl": "https://rankchoice.me/vote/abc123",
   "pollOwnerName": "John Doe",
   "pollOwnerEmail": "john@company.com",
   "closesAt": "2024-12-31T23:59:59Z",
@@ -92,7 +92,7 @@ Content-Type: application/json
 
 {
   "pollTitle": "Company Board Election",
-  "votingUrl": "https://rankchoice.app/vote/abc123",
+  "votingUrl": "https://rankchoice.me/vote/abc123",
   "pollOwnerName": "John Doe",
   "pollOwnerEmail": "john@company.com",
   "recipients": [
@@ -112,7 +112,7 @@ Content-Type: application/json
   "pollTitle": "Company Board Election",
   "winnerName": "Alice Johnson",
   "totalVotes": 250,
-  "resultsUrl": "https://rankchoice.app/polls/123/results",
+  "resultsUrl": "https://rankchoice.me/polls/123/results",
   "pollOwnerName": "John Doe",
   "finalRankings": [
     {"position": 1, "name": "Alice Johnson", "votes": 125, "percentage": 50},

@@ -24,14 +24,17 @@ dev-bg: check-deps ## Start the full development environment in background
 	@echo "🚀 Starting RankChoice.me development environment in background..."
 	@$(MAKE) docker-up
 	@sleep 3
+	@$(MAKE) email-bg
+	@sleep 2
 	@$(MAKE) backend-bg
 	@sleep 2
 	@$(MAKE) frontend-bg
 	@echo "✅ All services started in background"
 	@$(MAKE) status
 
-dev-parallel: ## Start backend and frontend in parallel (for internal use)
+dev-parallel: ## Start email, backend and frontend in parallel (for internal use)
 	@trap 'kill 0' INT; \
+	$(MAKE) email & \
 	$(MAKE) backend & \
 	$(MAKE) frontend & \
 	wait
@@ -40,15 +43,17 @@ stop: ## Stop all development services
 	@echo "🛑 Stopping all development services..."
 	@pkill -f "cargo run" || true
 	@pkill -f "vite dev" || true
+	@pkill -f "ts-node src/index.ts" || true
 	@pkill -f "npm run dev" || true
 	@$(MAKE) kill-ports
 	@docker-compose down
 	@echo "✅ All services stopped"
 
-kill-ports: ## Kill processes using development ports (8081, 5174)
-	@echo "🔫 Killing processes using ports 8081 and 5174..."
-	@lsof -ti:8081 | xargs -r kill -9 2>/dev/null || true
-	@lsof -ti:5174 | xargs -r kill -9 2>/dev/null || true
+kill-ports: ## Kill processes using development ports (3001, 8081, 5174)
+	@echo "🔫 Killing processes using ports 3001, 8081, 5174..."
+	@lsof -ti:3001 | xargs kill -9 2>/dev/null || true
+	@lsof -ti:8081 | xargs kill -9 2>/dev/null || true
+	@lsof -ti:5174 | xargs kill -9 2>/dev/null || true
 	@sleep 1
 
 smart-restart: ## Smart restart - kills ports and restarts without recompilation (fastest)
@@ -135,10 +140,25 @@ frontend-bg: ## Start the frontend development server in background
 	@echo "💻 Starting Svelte frontend server in background..."
 	@cd frontend && npm run dev > ../logs/frontend.log 2>&1 &
 	@sleep 2
-	@if pgrep -f "npm run dev" > /dev/null; then \
+	@if pgrep -f "vite" > /dev/null; then \
 		echo "✅ Frontend started successfully"; \
 	else \
 		echo "❌ Frontend failed to start"; \
+		exit 1; \
+	fi
+
+email: ## Start the email service (blocking)
+	@echo "📧 Starting email service..."
+	@cd services/email && npm run dev
+
+email-bg: ## Start the email service in background
+	@echo "📧 Starting email service in background..."
+	@cd services/email && npm run dev > ../../logs/email.log 2>&1 &
+	@sleep 2
+	@if lsof -ti:3001 >/dev/null 2>&1; then \
+		echo "✅ Email service started (port 3001 - emails in MailHog http://localhost:8026)"; \
+	else \
+		echo "❌ Email service failed - check logs/email.log and services/email/.env"; \
 		exit 1; \
 	fi
 
@@ -148,8 +168,13 @@ install: ## Install all dependencies
 	@echo "📦 Installing dependencies..."
 	@$(MAKE) install-backend
 	@$(MAKE) install-frontend
+	@$(MAKE) install-email
 	@$(MAKE) setup-logs
 	@echo "✅ All dependencies installed"
+
+install-email: ## Install email service dependencies
+	@echo "📧 Installing email service dependencies..."
+	@cd services/email && npm install
 
 install-backend: ## Install backend dependencies
 	@echo "🦀 Installing Rust dependencies..."
@@ -299,6 +324,9 @@ logs: ## Show logs from all services
 	@echo "=== BACKEND LOGS ==="
 	@tail -n 20 logs/backend.log 2>/dev/null || echo "No backend logs found"
 	@echo ""
+	@echo "=== EMAIL LOGS ==="
+	@tail -n 20 logs/email.log 2>/dev/null || echo "No email logs found"
+	@echo ""
 	@echo "=== FRONTEND LOGS ==="
 	@tail -n 20 logs/frontend.log 2>/dev/null || echo "No frontend logs found"
 	@echo ""
@@ -324,8 +352,14 @@ status: ## Show status of all services
 	else \
 		echo "❌ Stopped"; \
 	fi
+	@printf "📧 Email:     "
+	@if lsof -ti:3001 >/dev/null 2>&1; then \
+		echo "✅ Running (http://localhost:3001 → MailHog:8026)"; \
+	else \
+		echo "❌ Stopped"; \
+	fi
 	@printf "💻 Frontend:  "
-	@if pgrep -f "npm run dev" > /dev/null; then \
+	@if lsof -ti:5174 >/dev/null 2>&1; then \
 		echo "✅ Running (http://localhost:5174)"; \
 	else \
 		echo "❌ Stopped"; \
@@ -335,10 +369,20 @@ status: ## Show status of all services
 health: ## Check health of all services
 	@echo "🏥 Health Check:"
 	@echo "==============="
-	@printf "Backend API: "
+	@printf "Backend API:  "
 	@curl -s http://localhost:8081/health > /dev/null && echo "✅ Healthy" || echo "❌ Unhealthy"
-	@printf "Frontend:    "
+	@printf "Email service: "
+	@curl -s http://localhost:3001/health > /dev/null && echo "✅ Healthy" || echo "❌ Unhealthy (start with: make email-bg)"
+	@printf "Frontend:     "
 	@curl -s http://localhost:5174 > /dev/null && echo "✅ Healthy" || echo "❌ Unhealthy"
+
+test-email: ## Test email flow (sends to MailHog - view at http://localhost:8026)
+	@echo "📧 Testing email flow (Email service + MailHog)..."
+	@curl -s -X POST http://localhost:3001/api/email/email-verification \
+		-H "Content-Type: application/json" \
+		-H "X-API-Key: dev-api-key-local" \
+		-d '{"verificationUrl":"http://localhost:5174/verify-email?token=test123","to":"test@example.com"}' && echo "" || true
+	@echo "► View the email in MailHog: http://localhost:8026"
 
 check-deps: ## Check if all required tools are installed
 	@echo "🔍 Checking dependencies..."
@@ -373,9 +417,9 @@ lint: ## Lint code (backend and frontend)
 quick-start: install dev-bg ## Quick start: install dependencies and start all services
 	@echo ""
 	@echo "🎉 RankChoice.me is ready!"
-	@echo "🌐 Frontend: http://localhost:5174"
-	@echo "🔧 Backend:  http://localhost:8081"
-	@echo "📧 MailHog:  http://localhost:8026"
+	@echo "🌐 Frontend:  http://localhost:5174"
+	@echo "🔧 Backend:   http://localhost:8081"
+	@echo "📧 MailHog:   http://localhost:8026 (view verification emails here)"
 	@echo ""
 	@echo "Use 'make stop' to stop all services"
 	@echo "Use 'make status' to check service status"

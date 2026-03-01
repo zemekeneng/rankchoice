@@ -231,11 +231,14 @@
 				</button>
 			</div>
 
-			<div class="text-center">
-				<a href="/" class="font-medium text-indigo-600 hover:text-indigo-500" data-testid="back-home-link">
-					← Back to home
-				</a>
-			</div>
+		<div class="flex items-center justify-between">
+			<a href="/" class="font-medium text-indigo-600 hover:text-indigo-500" data-testid="back-home-link">
+				← Back to home
+			</a>
+			<a href="/forgot-password" class="text-sm font-medium text-indigo-600 hover:text-indigo-500">
+				Forgot password?
+			</a>
+		</div>
 		</form>
 	</div>
 </div>

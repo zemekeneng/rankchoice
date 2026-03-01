@@ -10,8 +10,8 @@ process.env.SMTP_HOST = 'localhost';
 process.env.SMTP_PORT = '587';
 process.env.SMTP_USER = 'test@example.com';
 process.env.SMTP_PASS = 'test-password';
-process.env.FROM_EMAIL = 'noreply@rankchoice.app';
-process.env.FROM_NAME = 'RankChoice.app Test';
+process.env.FROM_EMAIL = 'noreply@rankchoice.me';
+process.env.FROM_NAME = 'RankChoice.me Test';
 process.env.EMAIL_SERVICE_API_KEY = 'test-api-key';
 
 // Suppress console output during tests unless explicitly needed

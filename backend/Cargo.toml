@@ -38,6 +38,7 @@ aws-sdk-dynamodb = "1.0"
 reqwest = { version = "0.11", default-features = false, features = ["json", "rustls-tls"] }
 
 # Utilities
+hex = "0.4"
 dotenv = "0.15"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }

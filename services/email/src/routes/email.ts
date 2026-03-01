@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { emailService } from '../services/EmailService';
 import { VoterInvitationData } from '../templates/voterInvitation';
 import { PollResultsData } from '../templates/pollResults';
+import { EmailVerificationData } from '../templates/emailVerification';
+import { PasswordResetData } from '../templates/passwordReset';
 
 const router = Router();
 
@@ -46,6 +48,115 @@ const PollResultsSchema = z.object({
     percentage: z.number().min(0).max(100)
   })),
   to: z.string().email()
+});
+
+const EmailVerificationSchema = z.object({
+  verificationUrl: z.string().url(),
+  userName: z.string().optional(),
+  to: z.string().email()
+});
+
+const PasswordResetSchema = z.object({
+  resetUrl: z.string().url(),
+  userName: z.string().optional(),
+  expiresIn: z.string().min(1),
+  to: z.string().email()
+});
+
+// POST /api/email/email-verification - Send email verification
+router.post('/email-verification', async (req: Request, res: Response) => {
+  try {
+    const validated = EmailVerificationSchema.parse(req.body);
+    const { to, ...verificationData } = validated;
+
+    const result = await emailService.sendEmailVerification(verificationData as EmailVerificationData, to);
+
+    if (result.success) {
+      res.json({
+        success: true,
+        data: {
+          messageId: result.messageId,
+          recipient: to
+        }
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'EMAIL_SEND_FAILED',
+          message: result.error || 'Failed to send verification email'
+        }
+      });
+    }
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid request data',
+          details: error.errors
+        }
+      });
+    } else {
+      console.error('Error sending verification email:', error);
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'Internal server error'
+        }
+      });
+    }
+  }
+});
+
+// POST /api/email/password-reset - Send password reset email
+router.post('/password-reset', async (req: Request, res: Response) => {
+  try {
+    const validated = PasswordResetSchema.parse(req.body);
+    const { to, ...resetData } = validated;
+
+    const result = await emailService.sendPasswordReset(resetData as PasswordResetData, to);
+
+    if (result.success) {
+      res.json({
+        success: true,
+        data: {
+          messageId: result.messageId,
+          recipient: to
+        }
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'EMAIL_SEND_FAILED',
+          message: result.error || 'Failed to send password reset email'
+        }
+      });
+    }
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid request data',
+          details: error.errors
+        }
+      });
+    } else {
+      console.error('Error sending password reset email:', error);
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'Internal server error'
+        }
+      });
+    }
+  }
 });
 
 // POST /api/email/voter-invitation - Send single voter invitation

@@ -11,6 +11,7 @@ pub struct User {
     pub password_hash: String,
     pub name: Option<String>,
     pub role: String,
+    pub email_verified: bool,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -34,6 +35,7 @@ pub struct UserResponse {
     pub email: String,
     pub name: Option<String>,
     pub role: String,
+    pub email_verified: bool,
     pub created_at: DateTime<Utc>,
 }
 
@@ -44,6 +46,7 @@ impl From<User> for UserResponse {
             email: user.email,
             name: user.name,
             role: user.role,
+            email_verified: user.email_verified,
             created_at: user.created_at,
         }
     }
@@ -55,7 +58,7 @@ impl User {
             r#"
             INSERT INTO users (email, password_hash, name, role)
             VALUES ($1, $2, $3, 'pollster')
-            RETURNING id, email, password_hash, name, role, created_at, updated_at
+            RETURNING id, email, password_hash, name, role, email_verified, created_at, updated_at
             "#,
         )
         .bind(req.email)
@@ -69,7 +72,7 @@ impl User {
 
     pub async fn find_by_email(pool: &PgPool, email: &str) -> Result<Option<User>, sqlx::Error> {
         let user = sqlx::query_as::<_, User>(
-            "SELECT id, email, password_hash, name, role, created_at, updated_at FROM users WHERE email = $1"
+            "SELECT id, email, password_hash, name, role, email_verified, created_at, updated_at FROM users WHERE email = $1"
         )
         .bind(email)
         .fetch_optional(pool)
@@ -80,12 +83,29 @@ impl User {
 
     pub async fn find_by_id(pool: &PgPool, id: Uuid) -> Result<Option<User>, sqlx::Error> {
         let user = sqlx::query_as::<_, User>(
-            "SELECT id, email, password_hash, name, role, created_at, updated_at FROM users WHERE id = $1"
+            "SELECT id, email, password_hash, name, role, email_verified, created_at, updated_at FROM users WHERE id = $1"
         )
         .bind(id)
         .fetch_optional(pool)
         .await?;
 
         Ok(user)
+    }
+
+    pub async fn set_email_verified(pool: &PgPool, user_id: Uuid) -> Result<(), sqlx::Error> {
+        sqlx::query("UPDATE users SET email_verified = true, updated_at = NOW() WHERE id = $1")
+            .bind(user_id)
+            .execute(pool)
+            .await?;
+        Ok(())
+    }
+
+    pub async fn update_password(pool: &PgPool, user_id: Uuid, password_hash: &str) -> Result<(), sqlx::Error> {
+        sqlx::query("UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2")
+            .bind(password_hash)
+            .bind(user_id)
+            .execute(pool)
+            .await?;
+        Ok(())
     }
 } 
