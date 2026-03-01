@@ -145,8 +145,8 @@
 </script>
 
 <svelte:head>
-	<title>Register - RankChoice</title>
-	<meta name="description" content="Create your RankChoice account" />
+	<title>Register - RankedChoice</title>
+	<meta name="description" content="Create your RankedChoice account" />
 </svelte:head>
 
 <div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">

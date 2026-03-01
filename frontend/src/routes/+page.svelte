@@ -17,7 +17,7 @@
 </script>
 
 <svelte:head>
-	<title>RankChoice.app - Modern Ranked-Choice Voting Platform</title>
+	<title>RankedChoice.me - Modern Ranked-Choice Voting Platform</title>
 	<meta name="description" content="Create and manage ranked-choice voting polls with real-time results and secure ballot distribution." />
 </svelte:head>
 
@@ -26,7 +26,7 @@
 	<div class="max-w-7xl mx-auto py-16 px-4 sm:py-24 sm:px-6 lg:px-8">
 		<div class="text-center">
 			<h1 class="text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl" data-testid="hero-title">
-				🗳️ RankChoice
+				🗳️ RankedChoice
 			</h1>
 			<p class="mt-6 max-w-2xl mx-auto text-xl text-indigo-100" data-testid="hero-description">
 				The modern platform for ranked-choice voting. Create polls, distribute ballots, and visualize results with transparent RCV tabulation.
@@ -66,7 +66,7 @@
 	<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 		<div class="text-center">
 			<h2 class="text-3xl font-extrabold text-gray-900 sm:text-4xl" data-testid="features-heading">
-				Why Choose RankChoice?
+				Why Choose RankedChoice?
 			</h2>
 			<p class="mt-4 max-w-2xl mx-auto text-xl text-gray-500" data-testid="features-subheading">
 				Built for transparency, security, and ease of use
@@ -217,7 +217,7 @@
 				<span class="block">Create your first poll today.</span>
 			</h2>
 			<p class="mt-4 text-lg leading-6 text-indigo-200" data-testid="cta-description">
-				Join organizations using RankChoice for fair, transparent elections.
+				Join organizations using RankedChoice for fair, transparent elections.
 			</p>
 			<button
 				data-testid="cta-signup-btn"

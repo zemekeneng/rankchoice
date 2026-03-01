@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document details the implementation of the Ranked-Choice Voting (RCV) algorithm for RankChoice.app, covering both single-winner and multi-winner elections.
+This document details the implementation of the Ranked-Choice Voting (RCV) algorithm for RankedChoice.me, covering both single-winner and multi-winner elections.
 
 ## Single-Winner RCV Algorithm
 

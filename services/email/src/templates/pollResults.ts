@@ -39,7 +39,7 @@ ${data.resultsUrl}
 
 Thank you for participating in this ranked choice vote organized by ${data.pollOwnerName}!
 
-The RankChoice.me Team
+The RankedChoice.me Team
   `.trim();
 
   const html = `
@@ -151,7 +151,7 @@ The RankChoice.me Team
 <body>
     <div class="container">
         <div class="header">
-            <div class="logo">🗳️ RankChoice.me</div>
+            <div class="logo">🗳️ RankedChoice.me</div>
             <h1>Poll Results Are In!</h1>
         </div>
 
@@ -188,7 +188,7 @@ The RankChoice.me Team
 
         <div class="footer">
             <p>Thank you for participating in this vote organized by <strong>${data.pollOwnerName}</strong></p>
-            <p>Powered by RankChoice.me - Democratic voting made simple</p>
+            <p>Powered by RankedChoice.me - Democratic voting made simple</p>
         </div>
     </div>
 </body>

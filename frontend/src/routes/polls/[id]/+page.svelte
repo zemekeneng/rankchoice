@@ -378,7 +378,7 @@
 </script>
 
 <svelte:head>
-	<title>{poll ? poll.title : 'Poll Management'} - RankChoice</title>
+	<title>{poll ? poll.title : 'Poll Management'} - RankedChoice</title>
 	<meta name="description" content="Manage your ranked-choice voting poll" />
 </svelte:head>
 

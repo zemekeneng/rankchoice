@@ -4,7 +4,7 @@ use tower_http::cors::CorsLayer;
 use uuid::Uuid;
 use serde_json::json;
 
-use rankchoice_api::services::auth::AuthService;
+use rankedchoice_api::services::auth::AuthService;
 
 // Consistent test user ID for all tests
 pub const TEST_USER_ID: &str = "550e8400-e29b-41d4-a716-446655440000";
@@ -45,32 +45,32 @@ pub async fn create_test_app(pool: PgPool) -> Router {
     Router::new()
         .route("/health", get(health_handler))
         // Authentication routes (public)
-        .route("/api/auth/register", post(rankchoice_api::api::auth::register))
-        .route("/api/auth/login", post(rankchoice_api::api::auth::login))
-        .route("/api/auth/refresh", post(rankchoice_api::api::auth::refresh))
+        .route("/api/auth/register", post(rankedchoice_api::api::auth::register))
+        .route("/api/auth/login", post(rankedchoice_api::api::auth::login))
+        .route("/api/auth/refresh", post(rankedchoice_api::api::auth::refresh))
         // Protected poll routes
-        .route("/api/polls", get(rankchoice_api::api::polls::list_polls))
-        .route("/api/polls", post(rankchoice_api::api::polls::create_poll))
-        .route("/api/polls/:id", get(rankchoice_api::api::polls::get_poll))
-        .route("/api/polls/:id", put(rankchoice_api::api::polls::update_poll))
-        .route("/api/polls/:id", delete(rankchoice_api::api::polls::delete_poll))
+        .route("/api/polls", get(rankedchoice_api::api::polls::list_polls))
+        .route("/api/polls", post(rankedchoice_api::api::polls::create_poll))
+        .route("/api/polls/:id", get(rankedchoice_api::api::polls::get_poll))
+        .route("/api/polls/:id", put(rankedchoice_api::api::polls::update_poll))
+        .route("/api/polls/:id", delete(rankedchoice_api::api::polls::delete_poll))
         // Candidate management routes
-        .route("/api/polls/:id/candidates", get(rankchoice_api::api::candidates::list_candidates))
-        .route("/api/polls/:id/candidates", post(rankchoice_api::api::candidates::add_candidate))
-        .route("/api/polls/:id/candidates/order", put(rankchoice_api::api::candidates::reorder_candidates))
-        .route("/api/candidates/:id", put(rankchoice_api::api::candidates::update_candidate))
-        .route("/api/candidates/:id", delete(rankchoice_api::api::candidates::delete_candidate))
+        .route("/api/polls/:id/candidates", get(rankedchoice_api::api::candidates::list_candidates))
+        .route("/api/polls/:id/candidates", post(rankedchoice_api::api::candidates::add_candidate))
+        .route("/api/polls/:id/candidates/order", put(rankedchoice_api::api::candidates::reorder_candidates))
+        .route("/api/candidates/:id", put(rankedchoice_api::api::candidates::update_candidate))
+        .route("/api/candidates/:id", delete(rankedchoice_api::api::candidates::delete_candidate))
         // Voter management routes
-        .route("/api/polls/:id/invite", post(rankchoice_api::api::voters::create_voter))
-        .route("/api/polls/:id/voters", get(rankchoice_api::api::voters::list_voters))
-        .route("/api/polls/:id/registration", post(rankchoice_api::api::voters::create_registration_link))
+        .route("/api/polls/:id/invite", post(rankedchoice_api::api::voters::create_voter))
+        .route("/api/polls/:id/voters", get(rankedchoice_api::api::voters::list_voters))
+        .route("/api/polls/:id/registration", post(rankedchoice_api::api::voters::create_registration_link))
         // Voting routes (public)
-        .route("/api/vote/:token", get(rankchoice_api::api::voting::get_ballot))
-        .route("/api/vote/:token", post(rankchoice_api::api::voting::submit_ballot))
-        .route("/api/vote/:token/receipt", get(rankchoice_api::api::voting::get_voting_receipt))
+        .route("/api/vote/:token", get(rankedchoice_api::api::voting::get_ballot))
+        .route("/api/vote/:token", post(rankedchoice_api::api::voting::submit_ballot))
+        .route("/api/vote/:token/receipt", get(rankedchoice_api::api::voting::get_voting_receipt))
         // Results routes (protected)
-        .route("/api/polls/:id/results", get(rankchoice_api::api::results::get_poll_results))
-        .route("/api/polls/:id/results/rounds", get(rankchoice_api::api::results::get_rcv_rounds))
+        .route("/api/polls/:id/results", get(rankedchoice_api::api::results::get_poll_results))
+        .route("/api/polls/:id/results/rounds", get(rankedchoice_api::api::results::get_rcv_rounds))
         .layer(CorsLayer::permissive())
         .with_state(auth_service)
 }

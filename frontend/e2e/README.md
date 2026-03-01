@@ -1,6 +1,6 @@
 # End-to-End Tests
 
-This directory contains comprehensive Playwright E2E tests that verify the complete user flows of the RankChoice application.
+This directory contains comprehensive Playwright E2E tests that verify the complete user flows of the RankedChoice application.
 
 ## 🚨 CRITICAL RULES
 

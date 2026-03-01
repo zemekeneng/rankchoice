@@ -261,6 +261,6 @@ test.describe('Poll Creation and Management', () => {
 
     // Data should still be there (no more welcome screen)
     await expect(page.locator('text=Persistence Test Poll')).toBeVisible();
-    await expect(page.locator('text=Welcome to RankChoice!')).not.toBeVisible();
+    await expect(page.locator('text=Welcome to RankedChoice!')).not.toBeVisible();
   });
 }); 

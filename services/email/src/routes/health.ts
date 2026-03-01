@@ -7,7 +7,7 @@ const router = Router();
 router.get('/', (req: Request, res: Response) => {
   res.json({
     status: 'ok',
-    service: 'rankchoice-email-service',
+    service: 'rankedchoice-email-service',
     version: process.env.npm_package_version || '1.0.0',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
@@ -19,7 +19,7 @@ router.get('/', (req: Request, res: Response) => {
 router.get('/detailed', async (req: Request, res: Response) => {
   const healthData = {
     status: 'ok',
-    service: 'rankchoice-email-service',
+    service: 'rankedchoice-email-service',
     version: process.env.npm_package_version || '1.0.0',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),

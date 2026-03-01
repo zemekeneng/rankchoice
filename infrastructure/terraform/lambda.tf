@@ -1,6 +1,6 @@
 # IAM role for Lambda execution
 resource "aws_iam_role" "lambda_execution" {
-  name = "rankchoice-lambda-execution-${var.environment}"
+  name = "rankedchoice-lambda-execution-${var.environment}"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -22,7 +22,7 @@ resource "aws_iam_role_policy_attachment" "lambda_basic" {
 }
 
 resource "aws_iam_role_policy" "lambda_policy" {
-  name = "rankchoice-lambda-policy-${var.environment}"
+  name = "rankedchoice-lambda-policy-${var.environment}"
   role = aws_iam_role.lambda_execution.id
 
   policy = jsonencode({
@@ -73,14 +73,14 @@ resource "aws_iam_role_policy" "lambda_policy" {
 
 # Rust API Lambda function (no VPC — connects to Neon over public internet)
 resource "aws_lambda_function" "api" {
-  filename         = "${path.module}/../../backend/target/lambda/rankchoice-api/bootstrap.zip"
-  function_name    = "rankchoice-api-${var.environment}"
+  filename         = "${path.module}/../../backend/target/lambda/rankedchoice-api/bootstrap.zip"
+  function_name    = "rankedchoice-api-${var.environment}"
   role             = aws_iam_role.lambda_execution.arn
   handler          = "bootstrap"
   runtime          = "provided.al2023"
   timeout          = 30
   memory_size      = 512
-  source_code_hash = filebase64sha256("${path.module}/../../backend/target/lambda/rankchoice-api/bootstrap.zip")
+  source_code_hash = filebase64sha256("${path.module}/../../backend/target/lambda/rankedchoice-api/bootstrap.zip")
 
   environment {
     variables = {
@@ -114,6 +114,6 @@ resource "aws_lambda_permission" "api_gateway" {
 
 # CloudWatch log group
 resource "aws_cloudwatch_log_group" "api" {
-  name              = "/aws/lambda/rankchoice-api-${var.environment}"
+  name              = "/aws/lambda/rankedchoice-api-${var.environment}"
   retention_in_days = var.environment == "prod" ? 30 : 7
 }

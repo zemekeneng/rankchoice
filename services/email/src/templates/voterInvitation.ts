@@ -36,7 +36,7 @@ This is a ranked choice voting poll - you can rank the candidates in order of yo
 If you have any questions, you can contact the poll organizer at ${data.pollOwnerEmail}.
 
 Happy voting!
-The RankChoice.me Team
+The RankedChoice.me Team
   `.trim();
 
   const html = `
@@ -125,7 +125,7 @@ The RankChoice.me Team
 <body>
     <div class="container">
         <div class="header">
-            <div class="logo">🗳️ RankChoice.me</div>
+            <div class="logo">🗳️ RankedChoice.me</div>
             <h1>You're Invited to Vote!</h1>
         </div>
 
@@ -157,7 +157,7 @@ The RankChoice.me Team
         </div>
 
         <div class="footer">
-            <p>This invitation was sent via RankChoice.me</p>
+            <p>This invitation was sent via RankedChoice.me</p>
             <p>Secure, transparent, democratic voting made simple.</p>
         </div>
     </div>

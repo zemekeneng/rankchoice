@@ -368,7 +368,7 @@
 </script>
 
 <svelte:head>
-	<title>Edit Poll - {poll?.title || 'Loading...'} - RankChoice</title>
+	<title>Edit Poll - {poll?.title || 'Loading...'} - RankedChoice</title>
 	<meta name="description" content="Edit your ranked-choice voting poll" />
 </svelte:head>
 

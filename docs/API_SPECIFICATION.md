@@ -1,13 +1,13 @@
-# RankChoice API Specification
+# RankedChoice API Specification
 
 ## Overview
 
-The RankChoice API is a RESTful service that powers the ranked-choice voting platform. All endpoints return JSON and follow REST conventions.
+The RankedChoice API is a RESTful service that powers the ranked-choice voting platform. All endpoints return JSON and follow REST conventions.
 
 ## Base URL
 
-- Production: `https://rankchoice.app/api`
-- Staging: `https://staging.rankchoice.app/api`
+- Production: `https://rankedchoice.me/api`
+- Staging: `https://staging.rankedchoice.me/api`
 
 ## Authentication
 
@@ -360,7 +360,7 @@ Content-Type: application/json
     },
     "receipt": {
       "receipt_code": "VOTE-2024-A1B2C3",
-      "verification_url": "https://rankchoice.app/verify/VOTE-2024-A1B2C3"
+      "verification_url": "https://rankedchoice.me/verify/VOTE-2024-A1B2C3"
     }
   }
 }
@@ -438,7 +438,7 @@ Content-Type: application/json
 {
   "success": true,
   "data": {
-    "registration_link": "https://rankchoice.app/register/REG-TOKEN-789",
+    "registration_link": "https://rankedchoice.me/register/REG-TOKEN-789",
     "token": "REG-TOKEN-789",
     "max_uses": 100,
     "expires_at": "2024-12-31T23:59:59Z"
@@ -583,7 +583,7 @@ Content-Type: application/json
 
 {
   "title": "Try our new voting app!",
-  "content_url": "https://cdn.rankchoice.app/ads/new-app.jpg",
+  "content_url": "https://cdn.rankedchoice.me/ads/new-app.jpg",
   "link_url": "https://example.com/promo",
   "target_demographics": {
     "age_range": [18, 35],
@@ -653,9 +653,9 @@ Content-Type: application/json
 ### JavaScript/TypeScript
 
 ```typescript
-import { RankChoiceClient } from '@rankchoice/sdk';
+import { RankedChoiceClient } from '@rankedchoice/sdk';
 
-const client = new RankChoiceClient({
+const client = new RankedChoiceClient({
   apiKey: 'your-api-key',
   environment: 'production'
 });
@@ -677,9 +677,9 @@ const results = await client.polls.getResults(poll.id);
 ### Python
 
 ```python
-from rankchoice import RankChoiceClient
+from rankedchoice import RankedChoiceClient
 
-client = RankChoiceClient(
+client = RankedChoiceClient(
     api_key='your-api-key',
     environment='production'
 )
@@ -701,11 +701,11 @@ results = client.polls.get_results(poll.id)
 ### Rust
 
 ```rust
-use rankchoice_sdk::{RankChoiceClient, CreatePollRequest, Candidate};
+use rankedchoice_sdk::{RankedChoiceClient, CreatePollRequest, Candidate};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let client = RankChoiceClient::new("your-api-key");
+    let client = RankedChoiceClient::new("your-api-key");
     
     // Create a poll
     let poll = client.polls().create(CreatePollRequest {

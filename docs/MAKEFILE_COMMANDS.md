@@ -1,6 +1,6 @@
-# RankChoice.app - Makefile Commands Documentation
+# RankedChoice.me - Makefile Commands Documentation
 
-This document provides comprehensive documentation for all available Makefile commands in the RankChoice.app development environment.
+This document provides comprehensive documentation for all available Makefile commands in the RankedChoice.me development environment.
 
 ## Table of Contents
 
@@ -132,7 +132,7 @@ make fast-restart
 **What it does:**
 1. Kills all processes and clears ports
 2. Stops Docker containers with --remove-orphans
-3. Runs `cargo clean --package rankchoice-api` (keeps dependencies)
+3. Runs `cargo clean --package rankedchoice-api` (keeps dependencies)
 4. Rebuilds only the application code
 5. Starts fresh development environment
 

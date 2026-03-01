@@ -64,7 +64,7 @@
 </script>
 
 <svelte:head>
-	<title>Reset Password - RankChoice</title>
+	<title>Reset Password - RankedChoice</title>
 </svelte:head>
 
 <div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">

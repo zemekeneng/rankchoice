@@ -1,6 +1,6 @@
-# Svelte 5 Syntax Guide for RankChoice.app
+# Svelte 5 Syntax Guide for RankedChoice.me
 
-This guide covers the Svelte 5 runes and patterns used throughout the RankChoice.app project.
+This guide covers the Svelte 5 runes and patterns used throughout the RankedChoice.me project.
 
 ## Key Svelte 5 Concepts
 
@@ -102,7 +102,7 @@ Using the store in a component:
 </button>
 ```
 
-## RankChoice.app Specific Examples
+## RankedChoice.me Specific Examples
 
 ### 1. Form Handling with Svelte 5
 

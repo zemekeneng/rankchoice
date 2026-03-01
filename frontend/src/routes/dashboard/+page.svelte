@@ -143,7 +143,7 @@
 </script>
 
 <svelte:head>
-	<title>Dashboard - RankChoice</title>
+	<title>Dashboard - RankedChoice</title>
 	<meta name="description" content="Manage your ranked-choice voting polls" />
 </svelte:head>
 
@@ -285,7 +285,7 @@
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
 					</svg>
 				</div>
-				<h3 class="text-lg font-medium text-gray-900" data-testid="welcome-heading">Welcome to RankChoice!</h3>
+				<h3 class="text-lg font-medium text-gray-900" data-testid="welcome-heading">Welcome to RankedChoice!</h3>
 				<p class="mt-2 text-sm text-gray-600 max-w-md mx-auto" data-testid="welcome-description">
 					Create your first ranked-choice voting poll to get started. It's easy: add candidates, 
 					distribute voting links, and let voters rank their preferences.

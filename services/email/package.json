@@ -1,7 +1,7 @@
 {
-  "name": "rankchoice-email-service",
+  "name": "rankedchoice-email-service",
   "version": "1.0.0",
-  "description": "Email service for RankChoice.me voter invitations and notifications",
+  "description": "Email service for RankedChoice.me voter invitations and notifications",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
@@ -38,10 +38,10 @@
   },
   "keywords": [
     "email",
-    "rankchoice",
+    "rankedchoice",
     "voting",
     "notifications"
   ],
-  "author": "RankChoice.me",
+  "author": "RankedChoice.me",
   "license": "MIT"
 }

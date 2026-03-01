@@ -9,7 +9,7 @@ test.describe('Homepage and Landing Page', () => {
     
     // Check hero title
     await expect(page.locator('[data-testid="hero-title"]')).toBeVisible();
-    await expect(page.locator('[data-testid="hero-title"]')).toContainText('RankChoice');
+    await expect(page.locator('[data-testid="hero-title"]')).toContainText('RankedChoice');
     
     // Check hero description
     await expect(page.locator('[data-testid="hero-description"]')).toBeVisible();
@@ -76,7 +76,7 @@ test.describe('Homepage and Landing Page', () => {
     
     // Verify features section
     await expect(page.locator('[data-testid="features-section"]')).toBeVisible();
-    await expect(page.locator('[data-testid="features-heading"]')).toContainText('Why Choose RankChoice?');
+    await expect(page.locator('[data-testid="features-heading"]')).toContainText('Why Choose RankedChoice?');
     await expect(page.locator('[data-testid="features-subheading"]')).toContainText('transparency, security, and ease of use');
     
     // Check all feature cards are present

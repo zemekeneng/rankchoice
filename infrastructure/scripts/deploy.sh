@@ -26,7 +26,7 @@ bash "${SCRIPT_DIR}/build-lambda.sh"
 echo ""
 echo "=== Step 2: Build Frontend ==="
 cd "${PROJECT_ROOT}/frontend"
-VITE_API_URL="https://rankchoice.me/api" npm run build
+VITE_API_URL="https://rankedchoice.me/api" npm run build
 
 echo ""
 echo "=== Step 3: Terraform Apply ==="
@@ -48,4 +48,4 @@ aws cloudfront create-invalidation \
 
 echo ""
 echo "=== Deploy Complete ==="
-echo "Site: https://rankchoice.me"
+echo "Site: https://rankedchoice.me"

@@ -119,7 +119,7 @@
 </script>
 
 <svelte:head>
-	<title>{poll ? `${poll.title} - Results` : 'Poll Results'} - RankChoice</title>
+	<title>{poll ? `${poll.title} - Results` : 'Poll Results'} - RankedChoice</title>
 	<meta name="description" content={poll ? `Results for ranked-choice poll: ${poll.title}` : 'Ranked-choice voting poll results'} />
 	{#if poll}
 		<meta property="og:title" content="{poll.title} - Results" />
@@ -139,7 +139,7 @@
 						<svg class="h-8 w-8" fill="currentColor" viewBox="0 0 24 24">
 							<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
 						</svg>
-						<span class="text-xl font-bold">RankChoice</span>
+						<span class="text-xl font-bold">RankedChoice</span>
 					</a>
 				</div>
 				
@@ -323,7 +323,7 @@
 				<div class="text-center py-8">
 					<p class="text-gray-500 text-sm">
 						Powered by 
-						<a href="/" class="text-indigo-600 hover:text-indigo-500 font-medium">RankChoice</a>
+						<a href="/" class="text-indigo-600 hover:text-indigo-500 font-medium">RankedChoice</a>
 						- Create your own ranked-choice voting poll
 					</p>
 				</div>

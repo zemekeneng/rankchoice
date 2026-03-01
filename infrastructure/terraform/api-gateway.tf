@@ -1,6 +1,6 @@
 # HTTP API (v2) — sends v2 payload format natively compatible with lambda_http
 resource "aws_apigatewayv2_api" "main" {
-  name          = "rankchoice-${var.environment}"
+  name          = "rankedchoice-${var.environment}"
   protocol_type = "HTTP"
 }
 

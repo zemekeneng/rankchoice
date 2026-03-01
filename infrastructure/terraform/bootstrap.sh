@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-BUCKET_NAME="rankchoice-terraform-state"
-TABLE_NAME="rankchoice-terraform-locks"
+BUCKET_NAME="rankedchoice-terraform-state"
+TABLE_NAME="rankedchoice-terraform-locks"
 REGION="us-east-1"
 
 echo "Creating Terraform state S3 bucket: ${BUCKET_NAME}"

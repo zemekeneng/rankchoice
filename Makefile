@@ -1,4 +1,4 @@
-# RankChoice.me Development & Deployment Makefile
+# RankedChoice.me Development & Deployment Makefile
 
 .PHONY: help dev dev-bg stop clean install build test docker logs status check-deps \
         force-restart kill-ports smart-restart fast-restart \
@@ -6,14 +6,14 @@
 
 # Default target
 help: ## Show this help message
-	@echo "RankChoice.me Development Commands:"
+	@echo "RankedChoice.me Development Commands:"
 	@echo ""
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-25s\033[0m %s\n", $$1, $$2}'
 
 # ─── Development Environment ─────────────────────────────────────────────────
 
 dev: check-deps ## Start the full development environment (blocking)
-	@echo "🚀 Starting RankChoice.me development environment..."
+	@echo "🚀 Starting RankedChoice.me development environment..."
 	@echo "📋 Starting services in order: Database → Backend → Frontend"
 	@$(MAKE) docker-up
 	@sleep 3
@@ -21,7 +21,7 @@ dev: check-deps ## Start the full development environment (blocking)
 	@$(MAKE) dev-parallel
 
 dev-bg: check-deps ## Start the full development environment in background
-	@echo "🚀 Starting RankChoice.me development environment in background..."
+	@echo "🚀 Starting RankedChoice.me development environment in background..."
 	@$(MAKE) docker-up
 	@sleep 3
 	@$(MAKE) email-bg
@@ -57,7 +57,7 @@ kill-ports: ## Kill processes using development ports (3001, 8081, 5174)
 	@sleep 1
 
 smart-restart: ## Smart restart - kills ports and restarts without recompilation (fastest)
-	@echo "⚡ Smart restarting RankChoice.me (no recompilation)..."
+	@echo "⚡ Smart restarting RankedChoice.me (no recompilation)..."
 	@echo "🛑 Stopping all services..."
 	@pkill -f "cargo run" || true
 	@pkill -f "vite dev" || true
@@ -69,7 +69,7 @@ smart-restart: ## Smart restart - kills ports and restarts without recompilation
 	@echo "✅ Smart restart complete!"
 
 fast-restart: ## Fast restart - only recompiles app code, keeps dependencies
-	@echo "🚀 Fast restarting RankChoice.me with incremental compilation..."
+	@echo "🚀 Fast restarting RankedChoice.me with incremental compilation..."
 	@echo "🛑 Stopping all services..."
 	@pkill -f "cargo run" || true
 	@pkill -f "vite dev" || true
@@ -77,14 +77,14 @@ fast-restart: ## Fast restart - only recompiles app code, keeps dependencies
 	@$(MAKE) kill-ports
 	@docker-compose down --remove-orphans
 	@echo "🔧 Incremental rebuild (keeping dependencies)..."
-	@cd backend && cargo clean --package rankchoice-api
+	@cd backend && cargo clean --package rankedchoice-api
 	@cd backend && cargo build
 	@echo "🚀 Starting fresh environment..."
 	@$(MAKE) dev-bg
 	@echo "✅ Fast restart complete!"
 
 force-restart: ## Force restart with full clean rebuild (slowest)
-	@echo "🔄 Force restarting RankChoice.me with full clean compilation..."
+	@echo "🔄 Force restarting RankedChoice.me with full clean compilation..."
 	@echo "🛑 Aggressively stopping all services..."
 	@pkill -f "cargo run" || true
 	@pkill -f "vite dev" || true
@@ -105,7 +105,7 @@ docker-up: ## Start database and supporting services
 	@docker-compose up -d postgres localstack mailhog
 	@echo "⏳ Waiting for database to be ready..."
 	@for i in {1..30}; do \
-		if docker exec rankchoice_postgres pg_isready -U rankchoice >/dev/null 2>&1; then \
+		if docker exec rankedchoice_postgres pg_isready -U rankedchoice >/dev/null 2>&1; then \
 			echo "✅ Database ready"; \
 			exit 0; \
 		fi; \
@@ -196,7 +196,7 @@ db-migrate: ## Run database migrations (local)
 db-reset: ## Reset database (drop and recreate)
 	@echo "🗄️  Resetting database..."
 	@docker-compose down postgres
-	@docker volume rm rankchoice_postgres_data || true
+	@docker volume rm rankedchoice_postgres_data || true
 	@$(MAKE) docker-up
 	@sleep 3
 	@$(MAKE) db-migrate
@@ -223,7 +223,7 @@ build-lambda: ## Build backend as Lambda deployment package
 
 build-frontend-prod: ## Build frontend with production API URL
 	@echo "💻 Building Svelte frontend for production..."
-	@cd frontend && VITE_API_URL=https://rankchoice.me/api npm run build
+	@cd frontend && VITE_API_URL=https://rankedchoice.me/api npm run build
 
 # ─── Infrastructure & Deployment ────────────────────────────────────────────
 
@@ -251,7 +251,7 @@ tf-output: ## Show Terraform outputs
 	@cd infrastructure/terraform && terraform output
 
 deploy: ## Full production deploy: build Lambda + frontend, apply Terraform, sync S3, invalidate CDN
-	@echo "🚀 Deploying RankChoice.me to production..."
+	@echo "🚀 Deploying RankedChoice.me to production..."
 	@bash infrastructure/scripts/deploy.sh
 
 migrate-prod: ## Run database migrations against Neon (requires DATABASE_URL env var)
@@ -341,7 +341,7 @@ status: ## Show status of all services
 	@echo "📊 Service Status:"
 	@echo "=================="
 	@printf "🗄️  Database:  "
-	@if docker ps | grep rankchoice_postgres | grep -q "Up"; then \
+	@if docker ps | grep rankedchoice_postgres | grep -q "Up"; then \
 		echo "✅ Running"; \
 	else \
 		echo "❌ Stopped"; \
@@ -416,7 +416,7 @@ lint: ## Lint code (backend and frontend)
 
 quick-start: install dev-bg ## Quick start: install dependencies and start all services
 	@echo ""
-	@echo "🎉 RankChoice.me is ready!"
+	@echo "🎉 RankedChoice.me is ready!"
 	@echo "🌐 Frontend:  http://localhost:5174"
 	@echo "🔧 Backend:   http://localhost:8081"
 	@echo "📧 MailHog:   http://localhost:8026 (view verification emails here)"

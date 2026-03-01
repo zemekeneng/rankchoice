@@ -1,8 +1,8 @@
-# RankChoice.app
+# RankedChoice.me
 
 A modern, secure web application for creating and managing ranked-choice voting polls with real-time results and comprehensive analytics.
 
-![RankChoice.app](https://img.shields.io/badge/Status-In%20Development-yellow)
+![RankedChoice.me](https://img.shields.io/badge/Status-In%20Development-yellow)
 ![License](https://img.shields.io/badge/License-MIT-blue)
 ![Backend](https://img.shields.io/badge/Backend-Rust%20%2B%20Axum-orange)
 ![Frontend](https://img.shields.io/badge/Frontend-SvelteKit%20%2B%20Svelte%205-red)
@@ -54,7 +54,7 @@ Ranked-choice voting (RCV) is an electoral system where voters rank candidates i
 
 ### Project Structure
 ```
-rankchoice/
+rankedchoice/
 ├── backend/           # Rust API server (Axum)
 │   ├── src/          # Source code
 │   ├── migrations/   # Database migrations
@@ -79,8 +79,8 @@ rankchoice/
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/your-org/rankchoice.git
-   cd rankchoice
+   git clone https://github.com/your-org/rankedchoice.git
+   cd rankedchoice
    ```
 
 2. **Start the development environment**
@@ -315,8 +315,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 📞 Support
 
 - 📧 **Email**: [Insert contact email]
-- 🐛 **Issues**: [GitHub Issues](https://github.com/your-org/rankchoice/issues)
-- 💬 **Discussions**: [GitHub Discussions](https://github.com/your-org/rankchoice/discussions)
+- 🐛 **Issues**: [GitHub Issues](https://github.com/your-org/rankedchoice/issues)
+- 💬 **Discussions**: [GitHub Discussions](https://github.com/your-org/rankedchoice/discussions)
 
 ---
 

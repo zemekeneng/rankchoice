@@ -8,12 +8,12 @@ export interface EmailVerificationData {
 export function createEmailVerificationTemplate(data: EmailVerificationData): EmailTemplate {
   const greeting = data.userName ? `Hi ${data.userName}` : 'Hello';
 
-  const subject = 'Verify your email address - RankChoice.me';
+  const subject = 'Verify your email address - RankedChoice.me';
 
   const text = `
 ${greeting},
 
-Thanks for signing up for RankChoice.me! Please verify your email address by clicking the link below:
+Thanks for signing up for RankedChoice.me! Please verify your email address by clicking the link below:
 
 ${data.verificationUrl}
 
@@ -21,7 +21,7 @@ This link will expire in 24 hours.
 
 If you didn't create an account, you can safely ignore this email.
 
-The RankChoice.me Team
+The RankedChoice.me Team
   `.trim();
 
   const html = `
@@ -89,13 +89,13 @@ The RankChoice.me Team
 <body>
     <div class="container">
         <div class="header">
-            <div class="logo">RankChoice.me</div>
+            <div class="logo">RankedChoice.me</div>
             <h1>Verify Your Email</h1>
         </div>
 
         <p>${greeting},</p>
 
-        <p>Thanks for signing up for RankChoice.me! Please verify your email address by clicking the button below:</p>
+        <p>Thanks for signing up for RankedChoice.me! Please verify your email address by clicking the button below:</p>
 
         <div style="text-align: center;">
             <a href="${data.verificationUrl}" class="action-button">Verify Email Address</a>
@@ -112,7 +112,7 @@ The RankChoice.me Team
         </div>
 
         <div class="footer">
-            <p>This email was sent by RankChoice.me</p>
+            <p>This email was sent by RankedChoice.me</p>
             <p>Secure, transparent, democratic voting made simple.</p>
         </div>
     </div>

@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# RankChoice.app Project Setup Script
+# RankedChoice.me Project Setup Script
 
-echo "🚀 Setting up RankChoice.app project structure..."
+echo "🚀 Setting up RankedChoice.me project structure..."
 
 # Create backend structure
 echo "📦 Creating backend (Rust) structure..."
@@ -10,7 +10,7 @@ mkdir -p backend/{src/{api,models,services,rcv,middleware,utils},migrations,test
 
 # Initialize Rust project
 cd backend
-cargo init --name rankchoice-api
+cargo init --name rankedchoice-api
 cd ..
 
 # Create frontend structure
@@ -33,24 +33,24 @@ version: '3.8'
 services:
   postgres:
     image: postgres:15-alpine
-    container_name: rankchoice_postgres
+    container_name: rankedchoice_postgres
     environment:
-      POSTGRES_DB: rankchoice
-      POSTGRES_USER: rankchoice
+      POSTGRES_DB: rankedchoice
+      POSTGRES_USER: rankedchoice
       POSTGRES_PASSWORD: password
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U rankchoice"]
+      test: ["CMD-SHELL", "pg_isready -U rankedchoice"]
       interval: 10s
       timeout: 5s
       retries: 5
 
   localstack:
     image: localstack/localstack:latest
-    container_name: rankchoice_localstack
+    container_name: rankedchoice_localstack
     ports:
       - "4566:4566"
     environment:
@@ -63,7 +63,7 @@ services:
 
   mailhog:
     image: mailhog/mailhog:latest
-    container_name: rankchoice_mailhog
+    container_name: rankedchoice_mailhog
     ports:
       - "1025:1025"
       - "8025:8025"
@@ -77,7 +77,7 @@ EOF
 echo "⚙️ Configuring backend dependencies..."
 cat > backend/Cargo.toml << 'EOF'
 [package]
-name = "rankchoice-api"
+name = "rankedchoice-api"
 version = "0.1.0"
 edition = "2021"
 
@@ -128,7 +128,7 @@ mockall = "0.12"
 proptest = "1.4"
 
 [[bin]]
-name = "rankchoice-api"
+name = "rankedchoice-api"
 path = "src/main.rs"
 EOF
 

@@ -113,8 +113,8 @@
 </script>
 
 <svelte:head>
-	<title>Login - RankChoice</title>
-	<meta name="description" content="Login to your RankChoice account" />
+	<title>Login - RankedChoice</title>
+	<meta name="description" content="Login to your RankedChoice account" />
 </svelte:head>
 
 <div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">

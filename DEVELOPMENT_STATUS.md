@@ -1,4 +1,4 @@
-# RankChoice.app - Development Status & Next Steps
+# RankedChoice.me - Development Status & Next Steps
 
 ## Current Project Status (as of December 2024)
 
@@ -21,7 +21,7 @@
 
 #### Project Structure
 ```
-rankchoice/
+rankedchoice/
 ├── backend/           # Rust API server (Axum)
 ├── frontend/          # SvelteKit app (Svelte 5 + TypeScript)
 ├── docs/             # All documentation
@@ -317,7 +317,7 @@ rankchoice/
 
 ## 🚀 **Development Complete - Core MVP Ready!**
 
-All core functionality has been implemented and tested! The RankChoice.app MVP includes:
+All core functionality has been implemented and tested! The RankedChoice.me MVP includes:
 
 - ✅ **Complete Backend API** - All endpoints implemented and tested
 - ✅ **Full Frontend Application** - Authentication, poll creation, voting, and results
@@ -584,4 +584,4 @@ make test-e2e-debug     # Interactive debugging
 
 ---
 
-**🎉 MVP Development Complete!** The complete RankChoice.app is ready for production deployment with full user workflow from registration to voting to results. The application provides a complete ranked-choice voting platform with modern web technologies. 
+**🎉 MVP Development Complete!** The complete RankedChoice.me is ready for production deployment with full user workflow from registration to voting to results. The application provides a complete ranked-choice voting platform with modern web technologies. 

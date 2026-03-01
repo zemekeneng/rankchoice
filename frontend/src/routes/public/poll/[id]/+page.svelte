@@ -233,7 +233,7 @@
 </script>
 
 <svelte:head>
-	<title>{poll ? `Vote in: ${poll.title}` : 'Public Poll'} - RankChoice</title>
+	<title>{poll ? `Vote in: ${poll.title}` : 'Public Poll'} - RankedChoice</title>
 	<meta name="description" content={poll ? (poll.description || `Cast your vote in this ranked choice poll: ${poll.title}`) : 'Participate in ranked choice voting'} />
 	{#if poll}
 		<meta property="og:title" content="Vote in: {poll.title}" />
@@ -596,7 +596,7 @@
 
 			<!-- Footer -->
 			<div class="mt-8 text-center text-sm text-gray-500">
-				<p>Powered by <a href="/" class="text-blue-600 hover:text-blue-500">RankChoice</a> - Secure, transparent, democratic voting</p>
+				<p>Powered by <a href="/" class="text-blue-600 hover:text-blue-500">RankedChoice</a> - Secure, transparent, democratic voting</p>
 			</div>
 		</div>
 	{/if}

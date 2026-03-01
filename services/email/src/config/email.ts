@@ -44,8 +44,8 @@ export function createEmailConfig(): EmailConfig {
       pass: process.env.SMTP_PASS || '',
     },
     from: {
-      name: process.env.FROM_NAME || 'RankChoice.me',
-      address: process.env.FROM_EMAIL || 'noreply@rankchoice.me',
+      name: process.env.FROM_NAME || 'RankedChoice.me',
+      address: process.env.FROM_EMAIL || 'noreply@rankedchoice.me',
     },
   };
 

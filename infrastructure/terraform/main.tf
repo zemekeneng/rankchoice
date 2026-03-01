@@ -1,4 +1,4 @@
-# RankChoice.me Infrastructure — Lambda + Neon + S3/CloudFront
+# RankedChoice.me Infrastructure — Lambda + Neon + S3/CloudFront
 
 terraform {
   required_version = ">= 1.5.0"
@@ -15,11 +15,11 @@ terraform {
   }
 
   backend "s3" {
-    bucket         = "rankchoice-terraform-state"
+    bucket         = "rankedchoice-terraform-state"
     key            = "prod/terraform.tfstate"
     region         = "us-east-1"
     encrypt        = true
-    dynamodb_table = "rankchoice-terraform-locks"
+    dynamodb_table = "rankedchoice-terraform-locks"
   }
 }
 
@@ -28,7 +28,7 @@ provider "aws" {
 
   default_tags {
     tags = {
-      Project     = "RankChoice"
+      Project     = "RankedChoice"
       Environment = var.environment
       ManagedBy   = "Terraform"
     }
@@ -47,7 +47,7 @@ resource "random_password" "jwt_secret" {
 
 # Secrets Manager — database URL
 resource "aws_secretsmanager_secret" "database_url" {
-  name = "rankchoice-database-url-${var.environment}"
+  name = "rankedchoice-database-url-${var.environment}"
 }
 
 resource "aws_secretsmanager_secret_version" "database_url" {
@@ -57,7 +57,7 @@ resource "aws_secretsmanager_secret_version" "database_url" {
 
 # Secrets Manager — JWT secret
 resource "aws_secretsmanager_secret" "jwt_secret" {
-  name = "rankchoice-jwt-secret-${var.environment}"
+  name = "rankedchoice-jwt-secret-${var.environment}"
 }
 
 resource "aws_secretsmanager_secret_version" "jwt_secret" {
@@ -67,7 +67,7 @@ resource "aws_secretsmanager_secret_version" "jwt_secret" {
 
 # SQS queue for async tasks
 resource "aws_sqs_queue" "tasks" {
-  name                      = "rankchoice-tasks-${var.environment}"
+  name                      = "rankedchoice-tasks-${var.environment}"
   delay_seconds             = 0
   max_message_size          = 262144
   message_retention_seconds = 1209600
@@ -80,6 +80,6 @@ resource "aws_sqs_queue" "tasks" {
 }
 
 resource "aws_sqs_queue" "tasks_dlq" {
-  name                      = "rankchoice-tasks-dlq-${var.environment}"
+  name                      = "rankedchoice-tasks-dlq-${var.environment}"
   message_retention_seconds = 1209600
 }

@@ -6,7 +6,7 @@ use serde_json::{json, Value};
 use sqlx::PgPool;
 use tower::ServiceExt;
 use uuid::Uuid;
-use rankchoice_api::models::ballot::{Ballot, BallotRanking, Voter};
+use rankedchoice_api::models::ballot::{Ballot, BallotRanking, Voter};
 
 mod common;
 use common::*;

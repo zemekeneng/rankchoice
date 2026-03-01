@@ -221,7 +221,7 @@ pub async fn create_voter(
                     tracing::warn!("Poll owner not found for poll {}", poll.id);
                     User {
                         id: poll.user_id,
-                        email: "unknown@rankchoice.app".to_string(),
+                        email: "unknown@rankedchoice.me".to_string(),
                         name: Some("Poll Organizer".to_string()),
                         password_hash: String::new(),
                         role: "pollster".to_string(),
@@ -234,7 +234,7 @@ pub async fn create_voter(
                     tracing::error!("Database error finding poll owner: {}", e);
                     User {
                         id: poll.user_id,
-                        email: "unknown@rankchoice.app".to_string(),
+                        email: "unknown@rankedchoice.me".to_string(),
                         name: Some("Poll Organizer".to_string()),
                         password_hash: String::new(),
                         role: "pollster".to_string(),

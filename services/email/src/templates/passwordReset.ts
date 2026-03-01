@@ -9,12 +9,12 @@ export interface PasswordResetData {
 export function createPasswordResetTemplate(data: PasswordResetData): EmailTemplate {
   const greeting = data.userName ? `Hi ${data.userName}` : 'Hello';
 
-  const subject = 'Reset your password - RankChoice.me';
+  const subject = 'Reset your password - RankedChoice.me';
 
   const text = `
 ${greeting},
 
-We received a request to reset your password for your RankChoice.me account.
+We received a request to reset your password for your RankedChoice.me account.
 
 Click the link below to set a new password:
 ${data.resetUrl}
@@ -23,7 +23,7 @@ This link will expire in ${data.expiresIn}.
 
 If you didn't request a password reset, you can safely ignore this email. Your password will remain unchanged.
 
-The RankChoice.me Team
+The RankedChoice.me Team
   `.trim();
 
   const html = `
@@ -97,13 +97,13 @@ The RankChoice.me Team
 <body>
     <div class="container">
         <div class="header">
-            <div class="logo">RankChoice.me</div>
+            <div class="logo">RankedChoice.me</div>
             <h1>Reset Your Password</h1>
         </div>
 
         <p>${greeting},</p>
 
-        <p>We received a request to reset your password for your RankChoice.me account. Click the button below to set a new password:</p>
+        <p>We received a request to reset your password for your RankedChoice.me account. Click the button below to set a new password:</p>
 
         <div style="text-align: center;">
             <a href="${data.resetUrl}" class="action-button">Reset Password</a>
@@ -123,7 +123,7 @@ The RankChoice.me Team
         </div>
 
         <div class="footer">
-            <p>This email was sent by RankChoice.me</p>
+            <p>This email was sent by RankedChoice.me</p>
             <p>Secure, transparent, democratic voting made simple.</p>
         </div>
     </div>

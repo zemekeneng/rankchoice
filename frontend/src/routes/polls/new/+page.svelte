@@ -266,7 +266,7 @@
 </script>
 
 <svelte:head>
-	<title>Create Poll - RankChoice</title>
+	<title>Create Poll - RankedChoice</title>
 	<meta name="description" content="Create a new ranked-choice voting poll" />
 </svelte:head>
 

@@ -1,4 +1,4 @@
-# RankChoice.app - Project Planning Document
+# RankedChoice.me - Project Planning Document
 
 ## Table of Contents
 1. [Executive Summary](#executive-summary)
@@ -15,7 +15,7 @@
 
 ## Executive Summary
 
-RankChoice.app is a modern web application for creating and managing ranked-choice voting polls. The system enables pollsters to create elections, distribute unique voting links, collect ranked ballots, and visualize results using the ranked-choice voting methodology. Built with Rust for performance and deployed on AWS serverless infrastructure for scalability.
+RankedChoice.me is a modern web application for creating and managing ranked-choice voting polls. The system enables pollsters to create elections, distribute unique voting links, collect ranked ballots, and visualize results using the ranked-choice voting methodology. Built with Rust for performance and deployed on AWS serverless infrastructure for scalability.
 
 ### Key Features
 - Create ranked-choice voting polls with multiple candidates

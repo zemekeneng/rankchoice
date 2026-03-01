@@ -32,7 +32,7 @@
 			<div class="flex justify-between h-16">
 				<div class="flex items-center">
 					<a href="/" class="flex-shrink-0 flex items-center" data-testid="home-link">
-						<h1 class="text-xl font-bold text-gray-900">RankChoice</h1>
+						<h1 class="text-xl font-bold text-gray-900">RankedChoice</h1>
 					</a>
 				</div>
 

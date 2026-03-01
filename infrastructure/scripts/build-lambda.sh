@@ -16,7 +16,7 @@ fi
 echo "Building Lambda function..."
 cargo lambda build --release --features lambda
 
-LAMBDA_DIR="${PROJECT_ROOT}/backend/target/lambda/rankchoice-api"
+LAMBDA_DIR="${PROJECT_ROOT}/backend/target/lambda/rankedchoice-api"
 BOOTSTRAP="${LAMBDA_DIR}/bootstrap"
 if [ ! -f "${BOOTSTRAP}" ]; then
     echo "Error: Bootstrap binary not found at ${BOOTSTRAP}"

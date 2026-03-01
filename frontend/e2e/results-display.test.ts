@@ -199,8 +199,8 @@ test.describe('Results Display', () => {
     await page.waitForLoadState('domcontentloaded');
     await expect(page).toHaveTitle(/Poll Results/);
     
-    // Should have RankChoice branding
-    await expect(page.locator('h1:has-text("RankChoice")')).toBeVisible();
+    // Should have RankedChoice branding
+    await expect(page.locator('h1:has-text("RankedChoice")')).toBeVisible();
     
     // Should have share/copy functionality structure (even if poll doesn't exist)
     // The page should at least render without crashing

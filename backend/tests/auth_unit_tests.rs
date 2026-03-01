@@ -1,7 +1,7 @@
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use rankchoice_api::{
+use rankedchoice_api::{
     models::user::{CreateUserRequest, LoginRequest, User},
     services::auth::{AuthError, AuthService},
 };

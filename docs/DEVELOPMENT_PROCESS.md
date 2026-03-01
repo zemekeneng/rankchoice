@@ -1,6 +1,6 @@
-# RankChoice.app - Standard Development Process
+# RankedChoice.me - Standard Development Process
 
-This document defines the **official standard development process** for RankChoice.app. Following these steps ensures consistent, reliable development for both human and AI developers.
+This document defines the **official standard development process** for RankedChoice.me. Following these steps ensures consistent, reliable development for both human and AI developers.
 
 ## 🎯 The Golden Rule
 
@@ -25,7 +25,7 @@ make dev-bg
 
 **Expected output:**
 ```
-🚀 Starting RankChoice.app development environment in background...
+🚀 Starting RankedChoice.me development environment in background...
 🐳 Starting database and supporting services...
 ⏳ Waiting for database to be ready...
 ✅ Database ready
@@ -154,7 +154,7 @@ make test-e2e        # Run E2E tests (requires dev-bg)
 
 ## 🎯 Standards for AI Developers
 
-When working on RankChoice.app:
+When working on RankedChoice.me:
 
 1. **Always start with**: `make dev-bg`
 2. **Always verify with**: `make status` and `make health`

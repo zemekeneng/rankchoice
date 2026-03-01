@@ -37,7 +37,7 @@ resource "aws_acm_certificate_validation" "main" {
 
 # S3 bucket for static SPA assets
 resource "aws_s3_bucket" "static_assets" {
-  bucket = "rankchoice-static-${var.environment}"
+  bucket = "rankedchoice-static-${var.environment}"
 }
 
 resource "aws_s3_bucket_public_access_block" "static_assets" {
@@ -77,14 +77,14 @@ resource "aws_s3_bucket_policy" "static_assets" {
 
 # CloudFront Origin Access Identity
 resource "aws_cloudfront_origin_access_identity" "main" {
-  comment = "rankchoice-${var.environment}"
+  comment = "rankedchoice-${var.environment}"
 }
 
 # CloudFront distribution — S3 for SPA, API Gateway for /api/*
 resource "aws_cloudfront_distribution" "main" {
   enabled             = true
   is_ipv6_enabled     = true
-  comment             = "rankchoice-${var.environment}"
+  comment             = "rankedchoice-${var.environment}"
   default_root_object = "index.html"
   aliases             = [var.domain_name, "www.${var.domain_name}"]
   price_class         = "PriceClass_100"
@@ -194,7 +194,7 @@ resource "aws_cloudfront_distribution" "main" {
   }
 
   tags = {
-    Name = "rankchoice-${var.environment}"
+    Name = "rankedchoice-${var.environment}"
   }
 }
 

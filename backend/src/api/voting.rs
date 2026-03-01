@@ -305,7 +305,7 @@ pub async fn submit_ballot(
         ballot_response.ballot.id.to_string().split('-').next().unwrap_or("UNKNOWN")
     );
     
-    let verification_url = format!("https://rankchoice.app/verify/{}", receipt_code);
+    let verification_url = format!("https://rankedchoice.me/verify/{}", receipt_code);
 
     let response = SubmitBallotResponse {
         ballot: BallotSubmissionInfo {
@@ -368,7 +368,7 @@ pub async fn get_voting_receipt(
         ballot_row.id.to_string().split('-').next().unwrap_or("UNKNOWN")
     );
     
-    let verification_url = format!("https://rankchoice.app/verify/{}", receipt_code);
+    let verification_url = format!("https://rankedchoice.me/verify/{}", receipt_code);
 
     let response = VotingReceiptResponse {
         ballot_id: ballot_row.id,
@@ -495,7 +495,7 @@ pub async fn submit_anonymous_vote(
         ballot_response.id.to_string().split('-').next().unwrap_or("UNKNOWN")
     );
     
-    let verification_url = format!("https://rankchoice.app/verify/{}", receipt_code);
+    let verification_url = format!("https://rankedchoice.me/verify/{}", receipt_code);
 
     let response = AnonymousVoteResponse {
         ballot: AnonymousBallotInfo {

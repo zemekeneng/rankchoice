@@ -10,8 +10,8 @@ import type {
 } from '../types.js';
 
 // Storage keys
-const AUTH_STORAGE_KEY = 'rankchoice_auth';
-const TOKEN_STORAGE_KEY = 'rankchoice_tokens';
+const AUTH_STORAGE_KEY = 'rankedchoice_auth';
+const TOKEN_STORAGE_KEY = 'rankedchoice_tokens';
 
 class AuthStore {
 	// Svelte 5 reactive state using $state rune

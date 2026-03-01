@@ -54,7 +54,7 @@ test.describe('Complete Poll Workflow: Creation → Voting → Results', () => {
     
     // Should see empty state for new user
     await expect(page.locator('[data-testid="empty-state"]')).toBeVisible();
-    await expect(page.locator('[data-testid="welcome-heading"]')).toContainText('Welcome to RankChoice!');
+    await expect(page.locator('[data-testid="welcome-heading"]')).toContainText('Welcome to RankedChoice!');
     
     // Create first poll
     await page.click('[data-testid="create-first-poll-btn"]');
@@ -62,7 +62,7 @@ test.describe('Complete Poll Workflow: Creation → Voting → Results', () => {
     
     // Fill poll basic information
     await page.fill('[data-testid="poll-title-input"]', pollTitle);
-    await page.fill('[data-testid="poll-description-input"]', 'Complete workflow test for RankChoice voting system');
+    await page.fill('[data-testid="poll-description-input"]', 'Complete workflow test for RankedChoice voting system');
     
     // Keep single-winner poll type (default)
     await expect(page.locator('[data-testid="single-winner-radio"]')).toBeChecked();

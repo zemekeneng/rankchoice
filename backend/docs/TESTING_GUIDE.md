@@ -1,8 +1,8 @@
-# Testing Guide for RankChoice.app Backend
+# Testing Guide for RankedChoice.me Backend
 
 ## Overview
 
-This document outlines the comprehensive testing strategy for the RankChoice.app backend API. All components must be thoroughly tested before being marked as complete.
+This document outlines the comprehensive testing strategy for the RankedChoice.me backend API. All components must be thoroughly tested before being marked as complete.
 
 ## Testing Requirements
 
