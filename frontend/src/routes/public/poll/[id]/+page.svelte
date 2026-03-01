@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
+	import { dndzone } from 'svelte-dnd-action';
 	import { apiClient } from '$lib/api/client.js';
 	import type { Poll, Candidate } from '$lib/types.js';
 
@@ -103,14 +104,14 @@
 
 	// Voting state
 	let showVotingForm = $state(false);
-	let rankedCandidates = $state<Array<{id: string; name: string; description?: string; rank: number}>>([]);
-	let unrankedCandidates = $state<Array<{id: string; name: string; description?: string}>>([]);
+	let rankedCandidates = $state<Array<{id: string; name: string; description?: string; rank?: number}>>([]);
+	let unrankedCandidates = $state<Array<{id: string; name: string; description?: string; rank?: number}>>([]);
 	let isSubmitting = $state(false);
 	let voteSubmitted = $state(false);
 	let voteReceipt = $state<{receipt_code: string; verification_url: string} | null>(null);
 	let votingError = $state<string | null>(null);
 
-	// Initialize candidates for voting
+	// Initialize candidates for voting (match vote page structure with _drag suffix for dndzone)
 	function initializeVoting() {
 		if (poll?.registrationRequired) {
 			alert('This poll requires voter registration. Please contact the poll organizer for a voting link.');
@@ -120,26 +121,41 @@
 		showVotingForm = true;
 		rankedCandidates = [];
 		unrankedCandidates = candidates.map(c => ({
-			id: c.id,
+			id: c.id + '_drag',
 			name: c.name,
 			description: c.description
 		}));
 		votingError = null;
 	}
 
+	// DnD handlers (match vote page)
+	function handleRankedDrop(event: CustomEvent) {
+		rankedCandidates = event.detail.items;
+		updateRanks();
+	}
+
+	function handleUnrankedDrop(event: CustomEvent) {
+		unrankedCandidates = event.detail.items;
+	}
+
+	function updateRanks() {
+		rankedCandidates = rankedCandidates.map((c, index) => ({
+			...c,
+			rank: index + 1
+		}));
+	}
+
 	// Add candidate to ranking
 	function rankCandidate(candidate: {id: string; name: string; description?: string}) {
-		const newRank = rankedCandidates.length + 1;
-		rankedCandidates = [...rankedCandidates, { ...candidate, rank: newRank }];
 		unrankedCandidates = unrankedCandidates.filter(c => c.id !== candidate.id);
+		rankedCandidates = [...rankedCandidates, { ...candidate, rank: rankedCandidates.length + 1 }];
 	}
 
 	// Remove candidate from ranking
-	function unrankCandidate(candidate: {id: string; name: string; description?: string; rank: number}) {
-		unrankedCandidates = [...unrankedCandidates, { id: candidate.id, name: candidate.name, description: candidate.description }];
-		rankedCandidates = rankedCandidates
-			.filter(c => c.id !== candidate.id)
-			.map((c, index) => ({ ...c, rank: index + 1 }));
+	function unrankCandidate(candidate: {id: string; name: string; description?: string; rank?: number}) {
+		rankedCandidates = rankedCandidates.filter(c => c.id !== candidate.id);
+		unrankedCandidates = [...unrankedCandidates, { ...candidate, rank: undefined }];
+		updateRanks();
 	}
 
 	// Submit anonymous vote
@@ -154,8 +170,8 @@
 			votingError = null;
 
 			const rankings = rankedCandidates.map(c => ({
-				candidateId: c.id,
-				rank: c.rank
+				candidateId: c.id.replace('_drag', ''),
+				rank: c.rank ?? 0
 			}));
 
 			const result = await apiClient.submitAnonymousVote(poll.id, rankings);
@@ -385,122 +401,173 @@
 				</div>
 			{/if}
 
-			<!-- Voting Form Modal -->
+			<!-- Voting Form Modal (matches /vote/[token] UI) -->
 			{#if showVotingForm}
-				<div class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4 z-50">
-					<div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto">
-						<div class="px-6 py-4 border-b border-gray-200">
-							<div class="flex items-center justify-between">
-								<h3 class="text-lg font-medium text-gray-900">Vote in: {poll?.title}</h3>
-								<button onclick={cancelVoting} class="text-gray-400 hover:text-gray-600">
-									<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-									</svg>
-								</button>
+				<div class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4 z-50 overflow-y-auto">
+					<div class="bg-white rounded-lg shadow-xl max-w-4xl w-full my-8 max-h-[90vh] overflow-y-auto">
+						<!-- Header (matches vote page) -->
+						<div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+							<div>
+								<h1 class="text-2xl font-bold text-gray-900">Vote in: {poll?.title}</h1>
+								{#if poll?.description}
+									<p class="mt-2 text-gray-600">{poll.description}</p>
+								{/if}
+								<div class="mt-3 flex flex-wrap gap-2 text-sm text-gray-500">
+									<span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800">
+										{poll?.pollType === 'single_winner' ? 'Single Winner' : `${poll?.numWinners ?? 1} Winners`}
+									</span>
+									<span>Ranked Choice Voting</span>
+								</div>
 							</div>
+							<button onclick={cancelVoting} class="text-gray-400 hover:text-gray-600 p-1" aria-label="Close">
+								<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+								</svg>
+							</button>
 						</div>
 
-						<div class="px-6 py-4">
+						<div class="p-6">
+							<!-- Instructions (matches vote page) -->
+							<div class="mb-6">
+								<h2 class="text-lg font-medium text-gray-900 mb-2">Instructions</h2>
+								<div class="bg-blue-50 border border-blue-200 rounded-md p-4">
+									<p class="text-sm text-blue-800">
+										Drag and drop candidates to rank them in order of your preference. Your #1 choice should be at the top.
+										You can rank as many or as few candidates as you like.
+									</p>
+								</div>
+							</div>
+
 							{#if votingError}
-								<div class="mb-4 bg-red-50 border border-red-200 rounded-md p-4">
-									<div class="flex">
-										<svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-											<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-										</svg>
-										<div class="ml-3">
-											<p class="text-sm text-red-800">{votingError}</p>
-										</div>
-									</div>
+								<div class="mb-4 bg-red-50 border border-red-200 rounded-md p-3">
+									<p class="text-sm text-red-600">{votingError}</p>
 								</div>
 							{/if}
 
-							<p class="text-sm text-gray-600 mb-4">
-								Rank the candidates in order of preference. Your first choice should be ranked #1, your second choice #2, and so on.
-							</p>
-
-							<!-- Ranked Candidates -->
-							{#if rankedCandidates.length > 0}
-								<div class="mb-6">
-									<h4 class="text-sm font-medium text-gray-900 mb-3">Your Rankings</h4>
-									<div class="space-y-2">
-										{#each rankedCandidates as candidate}
-											<div class="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center justify-between">
-												<div class="flex items-center">
-													<span class="bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-full mr-3">
-														#{candidate.rank}
-													</span>
-													<div>
-														<h5 class="font-medium text-gray-900">{candidate.name}</h5>
-														{#if candidate.description}
-															<p class="text-sm text-gray-600">{candidate.description}</p>
-														{/if}
+							<!-- Two-column layout (matches vote page) -->
+							<div class="lg:grid lg:grid-cols-2 lg:gap-6">
+								<!-- Ranked Candidates (green zone) -->
+								<div class="mb-6 lg:mb-0">
+									<h3 class="text-md font-medium text-gray-900 mb-3">Your Rankings</h3>
+									<div 
+										class="min-h-32 bg-green-50 border-2 border-green-200 border-dashed rounded-lg p-4"
+										use:dndzone={{
+											items: rankedCandidates,
+											flipDurationMs: 200,
+											dragDisabled: isSubmitting
+										}}
+										onconsider={handleRankedDrop}
+										onfinalize={handleRankedDrop}
+									>
+										{#if rankedCandidates.length === 0}
+											<p class="text-green-600 text-center py-8">Drop candidates here to rank them</p>
+										{:else}
+											{#each rankedCandidates as candidate (candidate.id)}
+												<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3 mb-2 cursor-move hover:shadow-md transition-shadow">
+													<div class="flex items-center justify-between">
+														<div class="flex items-center space-x-3">
+															<div class="flex-shrink-0 w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+																<span class="text-sm font-medium text-green-800">#{candidate.rank}</span>
+															</div>
+															<div>
+																<h4 class="text-sm font-medium text-gray-900">{candidate.name}</h4>
+																{#if candidate.description}
+																	<p class="text-xs text-gray-500">{candidate.description}</p>
+																{/if}
+															</div>
+														</div>
+														<button
+															onclick={() => unrankCandidate(candidate)}
+															class="text-gray-400 hover:text-gray-600 focus:outline-none"
+															disabled={isSubmitting}
+															aria-label="Remove from rankings"
+														>
+															<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+																<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+															</svg>
+														</button>
 													</div>
 												</div>
-												<button
-													onclick={() => unrankCandidate(candidate)}
-													class="text-red-600 hover:text-red-800"
-													title="Remove from ranking"
-												>
-													<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-														<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-													</svg>
-												</button>
-											</div>
-										{/each}
+											{/each}
+										{/if}
 									</div>
 								</div>
-							{/if}
 
-							<!-- Unranked Candidates -->
-							{#if unrankedCandidates.length > 0}
-								<div class="mb-6">
-									<h4 class="text-sm font-medium text-gray-900 mb-3">Available Candidates</h4>
-									<div class="space-y-2">
-										{#each unrankedCandidates as candidate}
-											<div class="bg-gray-50 border border-gray-200 rounded-lg p-3 flex items-center justify-between">
-												<div>
-													<h5 class="font-medium text-gray-900">{candidate.name}</h5>
-													{#if candidate.description}
-														<p class="text-sm text-gray-600">{candidate.description}</p>
-													{/if}
+								<!-- Unranked Candidates (gray zone) -->
+								<div>
+									<h3 class="text-md font-medium text-gray-900 mb-3">Available Candidates</h3>
+									<div 
+										class="min-h-32 bg-gray-50 border-2 border-gray-200 border-dashed rounded-lg p-4"
+										use:dndzone={{
+											items: unrankedCandidates,
+											flipDurationMs: 200,
+											dragDisabled: isSubmitting
+										}}
+										onconsider={handleUnrankedDrop}
+										onfinalize={handleUnrankedDrop}
+									>
+										{#if unrankedCandidates.length === 0}
+											<p class="text-gray-500 text-center py-8">All candidates have been ranked</p>
+										{:else}
+											{#each unrankedCandidates as candidate (candidate.id)}
+												<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3 mb-2 cursor-move hover:shadow-md transition-shadow">
+													<div class="flex items-center justify-between">
+														<div>
+															<h4 class="text-sm font-medium text-gray-900">{candidate.name}</h4>
+															{#if candidate.description}
+																<p class="text-xs text-gray-500">{candidate.description}</p>
+															{/if}
+														</div>
+														<button
+															data-testid="rank-candidate-{candidate.id.replace('_drag', '')}"
+															onclick={() => rankCandidate(candidate)}
+															class="text-indigo-600 hover:text-indigo-800 focus:outline-none text-sm font-medium"
+															disabled={isSubmitting}
+														>
+															Rank
+														</button>
+													</div>
 												</div>
-												<button
-													data-testid="rank-candidate-{candidate.id}"
-													onclick={() => rankCandidate(candidate)}
-													class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm font-medium"
-												>
-													Rank #{rankedCandidates.length + 1}
-												</button>
-											</div>
-										{/each}
+											{/each}
+										{/if}
 									</div>
 								</div>
-							{/if}
-						</div>
+							</div>
 
-						<div class="px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
-							<button
-								onclick={cancelVoting}
-								class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
-							>
-								Cancel
-							</button>
-							<button
-								data-testid="submit-ballot-btn"
-								onclick={submitVote}
-								disabled={rankedCandidates.length === 0 || isSubmitting}
-								class="px-4 py-2 bg-blue-600 border border-transparent rounded-md text-sm font-medium text-white hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-							>
-								{#if isSubmitting}
-									<svg class="animate-spin h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-										<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-										<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-									</svg>
-									Submitting...
-								{:else}
-									Submit Vote
-								{/if}
-							</button>
+							<!-- Submit Section (matches vote page) -->
+							<div class="mt-8 border-t border-gray-200 pt-6 flex justify-between items-center">
+								<div class="text-sm text-gray-600">
+									{#if rankedCandidates.length > 0}
+										<p>You have ranked {rankedCandidates.length} candidate{rankedCandidates.length === 1 ? '' : 's'}</p>
+									{:else}
+										<p>Please rank at least one candidate</p>
+									{/if}
+								</div>
+								<div class="flex space-x-3">
+									<button
+										onclick={cancelVoting}
+										class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+									>
+										Cancel
+									</button>
+									<button
+										data-testid="submit-ballot-btn"
+										onclick={submitVote}
+										disabled={rankedCandidates.length === 0 || isSubmitting}
+										class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-gray-300 disabled:cursor-not-allowed"
+									>
+										{#if isSubmitting}
+											<svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+												<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+												<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+											</svg>
+											Submitting...
+										{:else}
+											Submit Ballot
+										{/if}
+									</button>
+								</div>
+							</div>
 						</div>
 					</div>
 				</div>
@@ -534,3 +601,14 @@
 		</div>
 	{/if}
 </div>
+
+<style>
+	/* DnD styles (matches vote page) */
+	:global([data-dnd-zone] .dnd-drop-zone) {
+		opacity: 0.8;
+	}
+	:global([data-dnd-zone] .dnd-drag-ghost) {
+		opacity: 0.5;
+		transform: rotate(5deg);
+	}
+</style>
