@@ -200,7 +200,7 @@
 			<button
 				data-testid="create-poll-btn"
 				onclick={createPoll}
-				class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+				class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
 			>
 				<svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
 					<path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
@@ -280,7 +280,7 @@
 		{:else if polls.length === 0}
 			<!-- Empty state - Onboarding -->
 			<div class="text-center py-12" data-testid="empty-state">
-				<div class="mx-auto h-24 w-24 text-indigo-600 mb-4">
+				<div class="mx-auto h-24 w-24 text-red-600 mb-4">
 					<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
 					</svg>
@@ -294,7 +294,7 @@
 				<!-- Feature highlights -->
 				<div class="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3 max-w-2xl mx-auto">
 					<div class="text-center">
-						<div class="mx-auto h-8 w-8 text-indigo-600 mb-2">
+						<div class="mx-auto h-8 w-8 text-red-600 mb-2">
 							<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
 							</svg>
@@ -303,7 +303,7 @@
 						<p class="text-xs text-gray-500">Add the options voters will rank</p>
 					</div>
 					<div class="text-center">
-						<div class="mx-auto h-8 w-8 text-indigo-600 mb-2">
+						<div class="mx-auto h-8 w-8 text-red-600 mb-2">
 							<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
 							</svg>
@@ -312,7 +312,7 @@
 						<p class="text-xs text-gray-500">Send links to voters</p>
 					</div>
 					<div class="text-center">
-						<div class="mx-auto h-8 w-8 text-indigo-600 mb-2">
+						<div class="mx-auto h-8 w-8 text-red-600 mb-2">
 							<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
 							</svg>
@@ -326,7 +326,7 @@
 					<button
 						data-testid="create-first-poll-btn"
 						onclick={createPoll}
-						class="inline-flex items-center px-6 py-3 border border-transparent shadow-sm text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+						class="inline-flex items-center px-6 py-3 border border-transparent shadow-sm text-base font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
 					>
 						<svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
 							<path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
@@ -349,7 +349,7 @@
 								<div class="px-4 py-4 sm:px-6">
 									<div class="flex items-center justify-between">
 										<div class="flex items-center">
-											<p class="text-sm font-medium text-indigo-600 truncate" data-testid="poll-title-{poll.id}">
+											<p class="text-sm font-medium text-red-600 truncate" data-testid="poll-title-{poll.id}">
 												{poll.title}
 											</p>
 											<span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {getStatusColor(getPollStatus(poll))}" data-testid="poll-status-{poll.id}">

@@ -135,7 +135,7 @@
 		<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 			<div class="flex justify-between items-center py-6">
 				<div class="flex items-center">
-					<a href="/" class="flex items-center space-x-2 text-indigo-600 hover:text-indigo-500">
+					<a href="/" class="flex items-center space-x-2 text-red-600 hover:text-red-500">
 						<svg class="h-8 w-8" fill="currentColor" viewBox="0 0 24 24">
 							<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
 						</svg>
@@ -147,7 +147,7 @@
 					{#if poll}
 						<button
 							onclick={shareResults}
-							class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+							class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
 						>
 							<svg class="h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
@@ -156,7 +156,7 @@
 						</button>
 						<button
 							onclick={copyLink}
-							class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+							class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
 						>
 							<svg class="h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -174,7 +174,7 @@
 		{#if isLoading}
 			<!-- Loading State -->
 			<div class="flex justify-center items-center py-12">
-				<div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+				<div class="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
 			</div>
 		{:else if error}
 			<!-- Error State -->
@@ -211,7 +211,7 @@
 								<span class="inline-flex items-center px-3 py-1 rounded-full {getStatusColor()}">
 									{getPollStatus()}
 								</span>
-								<span class="inline-flex items-center px-3 py-1 rounded-full bg-indigo-100 text-indigo-800">
+								<span class="inline-flex items-center px-3 py-1 rounded-full bg-red-100 text-red-800">
 									{poll.pollType === 'single_winner' ? 'Single Winner' : `${poll.numWinners} Winners`}
 								</span>
 								<span class="text-gray-500">
@@ -323,7 +323,7 @@
 				<div class="text-center py-8">
 					<p class="text-gray-500 text-sm">
 						Powered by 
-						<a href="/" class="text-indigo-600 hover:text-indigo-500 font-medium">RankedChoice</a>
+						<a href="/" class="text-red-600 hover:text-red-500 font-medium">RankedChoice</a>
 						- Create your own ranked-choice voting poll
 					</p>
 				</div>

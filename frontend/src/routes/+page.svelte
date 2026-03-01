@@ -22,13 +22,13 @@
 </svelte:head>
 
 <!-- Hero Section -->
-<div class="bg-indigo-700" data-testid="hero-section">
+<div class="bg-red-700" data-testid="hero-section">
 	<div class="max-w-7xl mx-auto py-16 px-4 sm:py-24 sm:px-6 lg:px-8">
 		<div class="text-center">
 			<h1 class="text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl" data-testid="hero-title">
 				🗳️ RankedChoice
 			</h1>
-			<p class="mt-6 max-w-2xl mx-auto text-xl text-indigo-100" data-testid="hero-description">
+			<p class="mt-6 max-w-2xl mx-auto text-xl text-red-100" data-testid="hero-description">
 				The modern platform for ranked-choice voting. Create polls, distribute ballots, and visualize results with transparent RCV tabulation.
 			</p>
 			<div class="mt-10 flex justify-center space-x-4" data-testid="hero-actions">
@@ -36,7 +36,7 @@
 					<button
 						data-testid="hero-dashboard-btn"
 						onclick={goToDashboard}
-						class="bg-white text-indigo-600 border-2 border-white hover:bg-indigo-50 px-8 py-3 text-lg font-medium rounded-lg shadow-lg transition-colors"
+						class="bg-white text-red-600 border-2 border-white hover:bg-red-50 px-8 py-3 text-lg font-medium rounded-lg shadow-lg transition-colors"
 					>
 						Go to Dashboard
 					</button>
@@ -44,14 +44,14 @@
 					<button
 						data-testid="hero-get-started-btn"
 						onclick={goToRegister}
-						class="bg-white text-indigo-600 border-2 border-white hover:bg-indigo-50 px-8 py-3 text-lg font-medium rounded-lg shadow-lg transition-colors"
+						class="bg-white text-red-600 border-2 border-white hover:bg-red-50 px-8 py-3 text-lg font-medium rounded-lg shadow-lg transition-colors"
 					>
 						Get Started
 					</button>
 					<button
 						data-testid="hero-sign-in-btn"
 						onclick={goToLogin}
-						class="bg-transparent text-white border-2 border-white hover:bg-white hover:text-indigo-600 px-8 py-3 text-lg font-medium rounded-lg shadow-lg transition-colors"
+						class="bg-transparent text-white border-2 border-white hover:bg-white hover:text-red-600 px-8 py-3 text-lg font-medium rounded-lg shadow-lg transition-colors"
 					>
 						Sign In
 					</button>
@@ -77,7 +77,7 @@
 			<div class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3" data-testid="features-grid">
 				<!-- Feature 1 -->
 				<div class="text-center" data-testid="feature-poll-creation">
-					<div class="flex items-center justify-center h-12 w-12 rounded-md bg-indigo-500 text-white mx-auto">
+					<div class="flex items-center justify-center h-12 w-12 rounded-md bg-red-500 text-white mx-auto">
 						<svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
 						</svg>
@@ -90,7 +90,7 @@
 
 				<!-- Feature 2 -->
 				<div class="text-center" data-testid="feature-secure-voting">
-					<div class="flex items-center justify-center h-12 w-12 rounded-md bg-indigo-500 text-white mx-auto">
+					<div class="flex items-center justify-center h-12 w-12 rounded-md bg-red-500 text-white mx-auto">
 						<svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
 						</svg>
@@ -103,7 +103,7 @@
 
 				<!-- Feature 3 -->
 				<div class="text-center" data-testid="feature-real-time-results">
-					<div class="flex items-center justify-center h-12 w-12 rounded-md bg-indigo-500 text-white mx-auto">
+					<div class="flex items-center justify-center h-12 w-12 rounded-md bg-red-500 text-white mx-auto">
 						<svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
 						</svg>
@@ -116,7 +116,7 @@
 
 				<!-- Feature 4 -->
 				<div class="text-center" data-testid="feature-drag-drop">
-					<div class="flex items-center justify-center h-12 w-12 rounded-md bg-indigo-500 text-white mx-auto">
+					<div class="flex items-center justify-center h-12 w-12 rounded-md bg-red-500 text-white mx-auto">
 						<svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2M7 4h10M7 4l-2 14h14l-2-14M11 9v6m2-6v6" />
 						</svg>
@@ -129,7 +129,7 @@
 
 				<!-- Feature 5 -->
 				<div class="text-center" data-testid="feature-email-distribution">
-					<div class="flex items-center justify-center h-12 w-12 rounded-md bg-indigo-500 text-white mx-auto">
+					<div class="flex items-center justify-center h-12 w-12 rounded-md bg-red-500 text-white mx-auto">
 						<svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
 						</svg>
@@ -142,7 +142,7 @@
 
 				<!-- Feature 6 -->
 				<div class="text-center" data-testid="feature-verified-results">
-					<div class="flex items-center justify-center h-12 w-12 rounded-md bg-indigo-500 text-white mx-auto">
+					<div class="flex items-center justify-center h-12 w-12 rounded-md bg-red-500 text-white mx-auto">
 						<svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
 						</svg>
@@ -173,7 +173,7 @@
 			<div class="grid grid-cols-1 gap-8 md:grid-cols-3" data-testid="how-it-works-steps">
 				<!-- Step 1 -->
 				<div class="text-center" data-testid="step-rank-candidates">
-					<div class="flex items-center justify-center h-16 w-16 rounded-full bg-indigo-100 text-indigo-600 mx-auto text-2xl font-bold">
+					<div class="flex items-center justify-center h-16 w-16 rounded-full bg-red-100 text-red-600 mx-auto text-2xl font-bold">
 						1
 					</div>
 					<h3 class="mt-4 text-lg font-medium text-gray-900">Voters Rank Candidates</h3>
@@ -184,7 +184,7 @@
 
 				<!-- Step 2 -->
 				<div class="text-center" data-testid="step-count-first-choices">
-					<div class="flex items-center justify-center h-16 w-16 rounded-full bg-indigo-100 text-indigo-600 mx-auto text-2xl font-bold">
+					<div class="flex items-center justify-center h-16 w-16 rounded-full bg-red-100 text-red-600 mx-auto text-2xl font-bold">
 						2
 					</div>
 					<h3 class="mt-4 text-lg font-medium text-gray-900">Count First Choices</h3>
@@ -195,7 +195,7 @@
 
 				<!-- Step 3 -->
 				<div class="text-center" data-testid="step-redistribute-votes">
-					<div class="flex items-center justify-center h-16 w-16 rounded-full bg-indigo-100 text-indigo-600 mx-auto text-2xl font-bold">
+					<div class="flex items-center justify-center h-16 w-16 rounded-full bg-red-100 text-red-600 mx-auto text-2xl font-bold">
 						3
 					</div>
 					<h3 class="mt-4 text-lg font-medium text-gray-900">Redistribute Votes</h3>
@@ -210,19 +210,19 @@
 
 <!-- CTA Section -->
 {#if !authStore.isAuthenticated}
-	<div class="bg-indigo-700" data-testid="cta-section">
+	<div class="bg-red-700" data-testid="cta-section">
 		<div class="max-w-2xl mx-auto text-center py-16 px-4 sm:py-20 sm:px-6 lg:px-8">
 			<h2 class="text-3xl font-extrabold text-white sm:text-4xl" data-testid="cta-heading">
 				<span class="block">Ready to get started?</span>
 				<span class="block">Create your first poll today.</span>
 			</h2>
-			<p class="mt-4 text-lg leading-6 text-indigo-200" data-testid="cta-description">
+			<p class="mt-4 text-lg leading-6 text-red-200" data-testid="cta-description">
 				Join organizations using RankedChoice for fair, transparent elections.
 			</p>
 			<button
 				data-testid="cta-signup-btn"
 				onclick={goToRegister}
-				class="mt-8 w-full inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-indigo-600 bg-white hover:bg-indigo-50 sm:w-auto"
+				class="mt-8 w-full inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-red-600 bg-white hover:bg-red-50 sm:w-auto"
 			>
 				Sign up for free
 			</button>

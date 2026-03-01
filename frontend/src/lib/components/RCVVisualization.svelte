@@ -403,7 +403,7 @@
 				<button
 					onclick={togglePlay}
 					disabled={currentRound === maxRound && !isPlaying}
-					class="px-4 py-1 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+					class="px-4 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
 				>
 					{isPlaying ? '⏸ Pause' : '▶ Play'}
 				</button>
@@ -423,13 +423,13 @@
 					<button
 						onclick={() => goToRound(index)}
 						class="w-8 h-8 text-xs rounded-full border-2 transition-all duration-200"
-						class:bg-indigo-600={index === currentRound}
+						class:bg-red-600={index === currentRound}
 						class:text-white={index === currentRound}
-						class:border-indigo-600={index === currentRound}
+						class:border-red-600={index === currentRound}
 						class:bg-white={index !== currentRound}
 						class:text-gray-600={index !== currentRound}
 						class:border-gray-300={index !== currentRound}
-						class:hover:border-indigo-400={index !== currentRound}
+						class:hover:border-red-400={index !== currentRound}
 					>
 						{index + 1}
 					</button>
@@ -445,7 +445,7 @@
 			</div>
 			<div class="w-full bg-gray-200 rounded-full h-2">
 				<div 
-					class="bg-indigo-600 h-2 rounded-full transition-all duration-300 ease-out"
+					class="bg-red-600 h-2 rounded-full transition-all duration-300 ease-out"
 					style="width: {((currentRound + 1) / rounds.length) * 100}%"
 				></div>
 			</div>
@@ -602,7 +602,7 @@
 							</div>
 						{/if}
 						{#if currentRound > 0}
-							<div class="text-sm text-indigo-600 mt-2">
+							<div class="text-sm text-red-600 mt-2">
 								<span class="font-medium">Vote transfers this round:</span>
 								{#each candidates as transferCandidate}
 									{@const transferred = getTransferredVotes(transferCandidate.id)}

@@ -1,6 +1,5 @@
 <script lang="ts">
 	import '../app.css';
-	import favicon from '$lib/assets/favicon.svg';
 	import { authStore } from '$lib/stores/auth.svelte.js';
 	import { goto } from '$app/navigation';
 
@@ -22,7 +21,7 @@
 </script>
 
 <svelte:head>
-	<link rel="icon" href={favicon} />
+	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 </svelte:head>
 
 <div class="min-h-screen bg-gray-50">
@@ -68,7 +67,7 @@
 						<a
 							href="/register"
 							data-testid="register-link"
-							class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+							class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium"
 						>
 							Sign Up
 						</a>

@@ -451,7 +451,7 @@
 		<!-- Header -->
 		<div class="mb-8">
 			<div class="flex items-center mb-4">
-				<a href="/dashboard" class="text-indigo-600 hover:text-indigo-500 mr-4">
+				<a href="/dashboard" class="text-red-600 hover:text-red-500 mr-4">
 					<svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
 						<path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
 					</svg>
@@ -593,8 +593,8 @@
 					data-testid="overview-tab"
 					onclick={() => handleTabChange('overview')}
 					class="py-2 px-1 border-b-2 font-medium text-sm"
-					class:border-indigo-500={activeTab === 'overview'}
-					class:text-indigo-600={activeTab === 'overview'}
+					class:border-red-500={activeTab === 'overview'}
+					class:text-red-600={activeTab === 'overview'}
 					class:border-transparent={activeTab !== 'overview'}
 					class:text-gray-500={activeTab !== 'overview'}
 					class:hover:text-gray-700={activeTab !== 'overview'}
@@ -605,8 +605,8 @@
 					data-testid="voters-tab"
 					onclick={() => handleTabChange('voters')}
 					class="py-2 px-1 border-b-2 font-medium text-sm"
-					class:border-indigo-500={activeTab === 'voters'}
-					class:text-indigo-600={activeTab === 'voters'}
+					class:border-red-500={activeTab === 'voters'}
+					class:text-red-600={activeTab === 'voters'}
 					class:border-transparent={activeTab !== 'voters'}
 					class:text-gray-500={activeTab !== 'voters'}
 					class:hover:text-gray-700={activeTab !== 'voters'}
@@ -622,8 +622,8 @@
 					data-testid="results-tab"
 					onclick={() => handleTabChange('results')}
 					class="py-2 px-1 border-b-2 font-medium text-sm"
-					class:border-indigo-500={activeTab === 'results'}
-					class:text-indigo-600={activeTab === 'results'}
+					class:border-red-500={activeTab === 'results'}
+					class:text-red-600={activeTab === 'results'}
 					class:border-transparent={activeTab !== 'results'}
 					class:text-gray-500={activeTab !== 'results'}
 					class:hover:text-gray-700={activeTab !== 'results'}
@@ -669,7 +669,7 @@
 					<div class="space-y-3">
 						<button
 							onclick={sharePublicPoll}
-							class="w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm bg-blue-600 text-sm font-medium text-white hover:bg-blue-700"
+							class="w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm bg-red-600 text-sm font-medium text-white hover:bg-red-700"
 							class:bg-gray-400={!poll?.isPublic}
 							class:hover:bg-gray-500={!poll?.isPublic}
 							class:cursor-not-allowed={!poll?.isPublic}
@@ -739,7 +739,7 @@
 					{#each candidates as candidate, index}
 						<li class="px-6 py-4">
 							<div class="flex items-start">
-								<span class="bg-indigo-100 text-indigo-800 text-xs font-medium mr-3 px-2.5 py-0.5 rounded-full">{index + 1}</span>
+								<span class="bg-red-100 text-red-800 text-xs font-medium mr-3 px-2.5 py-0.5 rounded-full">{index + 1}</span>
 								<div class="flex-1">
 									<h4 class="text-sm font-medium text-gray-900">{candidate.name}</h4>
 									{#if candidate.description}
@@ -801,7 +801,7 @@
 									type="email"
 									bind:value={voterFormData.email}
 									placeholder="voter@example.com"
-									class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+									class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 sm:text-sm"
 									disabled={addingVoter}
 								/>
 								<p class="mt-1 text-xs text-gray-500">
@@ -813,7 +813,7 @@
 									type="submit"
 									data-testid="add-voter-btn"
 									disabled={addingVoter}
-									class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-gray-300 disabled:cursor-not-allowed"
+									class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:bg-gray-300 disabled:cursor-not-allowed"
 								>
 									{#if addingVoter}
 										<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
@@ -841,7 +841,7 @@
 					
 					{#if votersLoading}
 						<div class="px-6 py-8 text-center">
-							<div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
+							<div class="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600 mx-auto"></div>
 							<p class="mt-2 text-sm text-gray-500">Loading voters...</p>
 						</div>
 					{:else if voters.length === 0}
@@ -898,7 +898,7 @@
 										<div class="flex items-center space-x-2">
 											<button
 												onclick={() => copyToClipboard(voter.votingUrl)}
-												class="inline-flex items-center px-3 py-1 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+												class="inline-flex items-center px-3 py-1 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
 											>
 												<svg class="h-4 w-4 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 													<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -909,7 +909,7 @@
 												href={voter.votingUrl}
 												target="_blank"
 												rel="noopener noreferrer"
-												class="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+												class="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
 											>
 												<svg class="h-4 w-4 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 													<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />

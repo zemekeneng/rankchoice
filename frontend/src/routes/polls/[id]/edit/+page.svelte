@@ -376,7 +376,7 @@
 	{#if isLoading}
 		<div class="flex items-center justify-center min-h-screen">
 			<div class="text-center">
-				<div class="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto mb-4"></div>
+				<div class="animate-spin rounded-full h-32 w-32 border-b-2 border-red-600 mx-auto mb-4"></div>
 				<p class="text-gray-600">Loading poll for editing...</p>
 			</div>
 		</div>
@@ -424,7 +424,7 @@
 							type="text"
 							id="title"
 							bind:value={pollForm.title}
-							class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+							class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500"
 							class:border-red-500={errors.title}
 							placeholder="Enter poll title"
 							required
@@ -447,7 +447,7 @@
 							id="description"
 							bind:value={pollForm.description}
 							rows="3"
-							class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+							class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500"
 							class:border-red-500={errors.description}
 							placeholder="Describe your poll (optional)"
 						></textarea>
@@ -475,7 +475,7 @@
 						<select
 							id="pollType"
 							bind:value={pollForm.pollType}
-							class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+							class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500"
 						>
 							<option value="single_winner">Single Winner</option>
 							<option value="multi_winner">Multiple Winners</option>
@@ -494,7 +494,7 @@
 								bind:value={pollForm.numWinners}
 								min="2"
 								max="10"
-								class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+								class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500"
 							/>
 						</div>
 					{/if}
@@ -508,7 +508,7 @@
 							type="datetime-local"
 							id="opensAt"
 							bind:value={pollForm.opensAt}
-							class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+							class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500"
 							class:border-red-500={errors.opensAt}
 						/>
 						{#if errors.opensAt}
@@ -529,7 +529,7 @@
 							type="datetime-local"
 							id="closesAt"
 							bind:value={pollForm.closesAt}
-							class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+							class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500"
 							class:border-red-500={errors.closesAt}
 						/>
 						{#if errors.closesAt}
@@ -549,7 +549,7 @@
 							type="checkbox"
 							id="isPublic"
 							bind:checked={pollForm.isPublic}
-							class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+							class="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
 						/>
 						<label for="isPublic" class="ml-2 block text-sm text-gray-700">
 							Make this poll public (visible to everyone)
@@ -561,7 +561,7 @@
 							type="checkbox"
 							id="registrationRequired"
 							bind:checked={pollForm.registrationRequired}
-							class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+							class="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
 						/>
 						<label for="registrationRequired" class="ml-2 block text-sm text-gray-700">
 							Require voter registration
@@ -577,7 +577,7 @@
 					<button
 						type="button"
 						onclick={addCandidate}
-						class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+						class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
 					>
 						+ Add Candidate
 					</button>
@@ -618,7 +618,7 @@
 										id="candidate-{index}-name"
 										value={candidate.name}
 										oninput={(e) => updateCandidate(index, 'name', e.target.value)}
-										class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+										class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500"
 										placeholder="Candidate name"
 										required
 									/>
@@ -634,7 +634,7 @@
 										id="candidate-{index}-description"
 										value={candidate.description}
 										oninput={(e) => updateCandidate(index, 'description', e.target.value)}
-										class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+										class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500"
 										placeholder="Brief description"
 									/>
 								</div>
@@ -657,14 +657,14 @@
 				<button
 					type="button"
 					onclick={handleCancel}
-					class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+					class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
 				>
 					Cancel
 				</button>
 				<button
 					type="submit"
 					disabled={isSubmitting}
-					class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+					class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
 				>
 					{isSubmitting ? 'Updating...' : 'Update Poll'}
 				</button>

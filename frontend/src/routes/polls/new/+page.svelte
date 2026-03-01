@@ -274,7 +274,7 @@
 	<!-- Header -->
 	<div class="mb-8">
 		<div class="flex items-center">
-			<a href="/dashboard" class="text-indigo-600 hover:text-indigo-500 mr-4">
+			<a href="/dashboard" class="text-red-600 hover:text-red-500 mr-4">
 				<svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
 					<path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
 				</svg>
@@ -335,7 +335,7 @@
 							<ol class="space-y-2">
 								{#each validCandidates as candidate, index}
 									<li class="flex items-start">
-										<span class="bg-indigo-100 text-indigo-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-full">{index + 1}</span>
+										<span class="bg-red-100 text-red-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-full">{index + 1}</span>
 										<div>
 											<div class="font-medium">{candidate.name}</div>
 											{#if candidate.description}
@@ -358,7 +358,7 @@
 							data-testid="create-poll-from-preview-btn"
 							onclick={handleSubmit}
 							disabled={isSubmitting}
-							class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-indigo-700 disabled:opacity-50"
+							class="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 disabled:opacity-50"
 						>
 							{#if isSubmitting}
 								Creating...
@@ -396,7 +396,7 @@
 								data-testid="poll-title-input"
 								bind:value={pollForm.title}
 								oninput={() => clearFieldError('title')}
-								class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+								class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 sm:text-sm"
 								class:border-red-300={errors.title?.length > 0}
 								placeholder="e.g., Best Programming Language 2024"
 								required
@@ -421,7 +421,7 @@
 								rows="3"
 								bind:value={pollForm.description}
 								oninput={() => clearFieldError('description')}
-								class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+								class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 sm:text-sm"
 								class:border-red-300={errors.description?.length > 0}
 								placeholder="Provide additional context about this poll..."
 							></textarea>
@@ -463,7 +463,7 @@
 										bind:group={pollForm.pollType}
 										value="single_winner"
 										onchange={handlePollTypeChange}
-										class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300"
+										class="focus:ring-red-500 h-4 w-4 text-red-600 border-gray-300"
 									/>
 									<span class="ml-3">
 										<span class="block text-sm font-medium text-gray-700">Single Winner</span>
@@ -478,7 +478,7 @@
 										bind:group={pollForm.pollType}
 										value="multi_winner"
 										onchange={handlePollTypeChange}
-										class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300"
+										class="focus:ring-red-500 h-4 w-4 text-red-600 border-gray-300"
 									/>
 									<span class="ml-3">
 										<span class="block text-sm font-medium text-gray-700">Multi Winner</span>
@@ -502,7 +502,7 @@
 									min="2"
 									max={Math.max(2, validCandidates.length - 1)}
 									oninput={() => clearFieldError('numWinners')}
-									class="mt-1 block w-20 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+									class="mt-1 block w-20 border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 sm:text-sm"
 									class:border-red-300={errors.numWinners?.length > 0}
 								/>
 								{#if errors.numWinners?.length > 0}
@@ -526,7 +526,7 @@
 									id="opensAt"
 									bind:value={pollForm.opensAt}
 									oninput={() => clearFieldError('opensAt')}
-									class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+									class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 sm:text-sm"
 									class:border-red-300={errors.opensAt?.length > 0}
 								/>
 								{#if errors.opensAt?.length > 0}
@@ -547,7 +547,7 @@
 									id="closesAt"
 									bind:value={pollForm.closesAt}
 									oninput={() => clearFieldError('closesAt')}
-									class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+									class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 sm:text-sm"
 									class:border-red-300={errors.closesAt?.length > 0}
 								/>
 								{#if errors.closesAt?.length > 0}
@@ -567,7 +567,7 @@
 									type="checkbox"
 									data-testid="poll-public-checkbox"
 									bind:checked={pollForm.isPublic}
-									class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded"
+									class="focus:ring-red-500 h-4 w-4 text-red-600 border-gray-300 rounded"
 								/>
 								<span class="ml-3">
 									<span class="block text-sm font-medium text-gray-700">Make poll public</span>
@@ -579,7 +579,7 @@
 								<input
 									type="checkbox"
 									bind:checked={pollForm.registrationRequired}
-									class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded"
+									class="focus:ring-red-500 h-4 w-4 text-red-600 border-gray-300 rounded"
 								/>
 								<span class="ml-3">
 									<span class="block text-sm font-medium text-gray-700">Require voter registration</span>
@@ -663,7 +663,7 @@
 											data-testid="candidate-name-{index}"
 											bind:value={candidate.name}
 											oninput={() => clearFieldError('candidates')}
-											class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+											class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 text-sm"
 											placeholder="Candidate name"
 										/>
 									</div>
@@ -676,7 +676,7 @@
 											id="candidate-desc-{index}"
 											rows="2"
 											bind:value={candidate.description}
-											class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+											class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 text-sm"
 											placeholder="Brief description of this candidate or option"
 										></textarea>
 									</div>
@@ -689,7 +689,7 @@
 							type="button"
 							data-testid="add-candidate-btn"
 							onclick={addCandidate}
-							class="w-full border-2 border-dashed border-gray-300 rounded-lg p-4 text-gray-600 hover:border-indigo-300 hover:text-indigo-600 hover:bg-indigo-50 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+							class="w-full border-2 border-dashed border-gray-300 rounded-lg p-4 text-gray-600 hover:border-red-300 hover:text-red-600 hover:bg-red-50 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
 						>
 							<svg class="mx-auto h-6 w-6 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -768,7 +768,7 @@
 				type="submit"
 				data-testid="create-poll-submit-btn"
 				disabled={isSubmitting}
-				class="bg-indigo-600 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+				class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
 			>
 				{#if isSubmitting}
 					<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

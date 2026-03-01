@@ -121,7 +121,7 @@
 {#if isLoading}
 	<div class="flex items-center justify-center min-h-screen">
 		<div class="text-center">
-			<div class="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto mb-4"></div>
+			<div class="animate-spin rounded-full h-32 w-32 border-b-2 border-red-600 mx-auto mb-4"></div>
 			<p class="text-gray-600">Loading results for printing...</p>
 		</div>
 	</div>

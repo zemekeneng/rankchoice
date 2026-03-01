@@ -132,7 +132,7 @@
 	<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
 		{#if loading}
 			<div class="text-center py-12" data-testid="voting-loading">
-				<div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+				<div class="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto"></div>
 				<p class="mt-4 text-gray-600">Loading ballot...</p>
 			</div>
 		{:else if error}
@@ -187,7 +187,7 @@
 						<button
 							data-testid="return-home-btn"
 							onclick={() => goto('/')}
-							class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+							class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
 						>
 							Return to Home
 						</button>
@@ -203,7 +203,7 @@
 						<p class="mt-2 text-gray-600" data-testid="poll-description">{poll.description}</p>
 					{/if}
 					<div class="mt-3 flex flex-wrap gap-2 text-sm text-gray-500" data-testid="poll-info">
-						<span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800" data-testid="poll-type-badge">
+						<span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-red-100 text-red-800" data-testid="poll-type-badge">
 							{poll.pollType === 'single_winner' ? 'Single Winner' : `${poll.numWinners} Winners`}
 						</span>
 						<span data-testid="voting-method">Ranked Choice Voting</span>
@@ -300,7 +300,7 @@
 												<button
 													data-testid="rank-candidate-btn-{candidate.id.replace('_drag', '')}"
 													onclick={() => rankCandidate(candidate)}
-													class="text-indigo-600 hover:text-indigo-800 focus:outline-none text-sm font-medium"
+													class="text-red-600 hover:text-red-800 focus:outline-none text-sm font-medium"
 													disabled={submitting}
 												>
 													Rank
@@ -334,7 +334,7 @@
 								data-testid="submit-ballot-btn"
 								onclick={submitBallot}
 								disabled={!canSubmit}
-								class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-gray-300 disabled:cursor-not-allowed"
+								class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:bg-gray-300 disabled:cursor-not-allowed"
 							>
 								{#if submitting}
 									<svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">

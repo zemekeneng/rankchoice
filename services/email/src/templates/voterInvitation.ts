@@ -69,7 +69,7 @@ The RankedChoice.me Team
         .logo {
             font-size: 24px;
             font-weight: bold;
-            color: #4f46e5;
+            color: #dc2626;
             margin-bottom: 10px;
         }
         .poll-title {
@@ -84,7 +84,7 @@ The RankedChoice.me Team
         }
         .vote-button {
             display: inline-block;
-            background-color: #4f46e5;
+            background-color: #dc2626;
             color: white;
             padding: 14px 28px;
             text-decoration: none;

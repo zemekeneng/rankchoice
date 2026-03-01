@@ -157,7 +157,7 @@
 			</h2>
 			<p class="mt-2 text-center text-sm text-gray-600">
 				Or
-				<a href="/login" class="font-medium text-indigo-600 hover:text-indigo-500" data-testid="sign-in-link">
+				<a href="/login" class="font-medium text-red-600 hover:text-red-500" data-testid="sign-in-link">
 					sign in to your existing account
 				</a>
 			</p>
@@ -176,7 +176,7 @@
 						data-testid="name-input"
 						autocomplete="name"
 						required
-						class="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+						class="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-red-500 focus:border-red-500 focus:z-10 sm:text-sm"
 						class:border-red-300={errors.name?.length > 0}
 						class:focus:ring-red-500={errors.name?.length > 0}
 						class:focus:border-red-500={errors.name?.length > 0}
@@ -205,7 +205,7 @@
 						data-testid="register-email-input"
 						autocomplete="email"
 						required
-						class="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+						class="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-red-500 focus:border-red-500 focus:z-10 sm:text-sm"
 						class:border-red-300={errors.email?.length > 0}
 						class:focus:ring-red-500={errors.email?.length > 0}
 						class:focus:border-red-500={errors.email?.length > 0}
@@ -234,7 +234,7 @@
 						data-testid="register-password-input"
 						autocomplete="new-password"
 						required
-						class="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+						class="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-red-500 focus:border-red-500 focus:z-10 sm:text-sm"
 						class:border-red-300={errors.password?.length > 0}
 						class:focus:ring-red-500={errors.password?.length > 0}
 						class:focus:border-red-500={errors.password?.length > 0}
@@ -263,7 +263,7 @@
 						data-testid="confirm-password-input"
 						autocomplete="new-password"
 						required
-						class="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+						class="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-red-500 focus:border-red-500 focus:z-10 sm:text-sm"
 						class:border-red-300={errors.confirmPassword?.length > 0}
 						class:focus:ring-red-500={errors.confirmPassword?.length > 0}
 						class:focus:border-red-500={errors.confirmPassword?.length > 0}
@@ -309,7 +309,7 @@
 					data-testid="register-submit-btn"
 					disabled={isSubmitting || authStore.isLoading}
 					onclick={handleSubmitButton}
-					class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+					class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
 				>
 					{#if isSubmitting || authStore.isLoading}
 						<svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -324,7 +324,7 @@
 			</div>
 
 			<div class="text-center">
-				<a href="/" class="font-medium text-indigo-600 hover:text-indigo-500" data-testid="register-back-home-link">
+				<a href="/" class="font-medium text-red-600 hover:text-red-500" data-testid="register-back-home-link">
 					← Back to home
 				</a>
 			</div>
